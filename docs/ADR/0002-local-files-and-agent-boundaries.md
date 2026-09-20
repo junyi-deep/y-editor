@@ -1,0 +1,13 @@
+# ADR 0002 — Local editing, native ownership, reviewed AI writes
+
+Accepted 2026-09-17. The user requested implementation beyond bootstrap and a Typora-compatible default interaction. The default shell now uses a blank centered document, hidden format toolbar, optional file/outline sidebar and opt-in AI panel. Original CSS and icons only.
+
+Native dialogs in Rust grant file access; selected folders become canonical workspace roots. Read/write/rename/trash/search and images use Rust commands, not a frontend filesystem or shell plugin. Saves use same-directory temporary files, fsync and atomic replacement. SHA-256 disk revisions detect external writes; UTF-8 BOM and CRLF are preserved. Draft recovery and settings stay local. Settings schema 1 migrates to schema 2; future versions fail explicitly.
+
+Pi 0.85.1 runs via JSONL RPC with an isolated config directory, no automatically discovered context/extensions/skills/prompts, and no built-in tools. An explicit host-owned extension provides confined read/search and propose_patch. Proposals do not write. Current-document proposals use the live snapshot and a conservative three-way line merge; other documents require exact-base equality and the normal Rust save boundary. Credentials are read from the OS credential store and passed only through the child environment. Models use OpenAI-compatible or Anthropic-compatible wire formats through Pi.
+
+Both sidecars and Pi's companion resources come from pinned official release assets with fixed SHA256 digests. The first actual process test exposed Pi's runtime theme dependency; packaging now carries it via PI_PACKAGE_DIR. The frontend has no process invocation capability.
+
+Settings schema 3 adds named model profiles, preserving keyring references. Resources are explicit references; Skills/prompts are text context, repositories are read-only. Knowledge currently uses bounded lexical chunk retrieval; semantic embeddings are not represented as implemented. MCP uses stdio or Streamable HTTP with explicit per-server enablement. Pi extension output is redirected to stderr in RPC mode, so the host parses only its private tool-request records there; an actual subprocess test verifies replies through the registered extension command. Frame readers enforce limits before growing buffers.
+
+AI history persists bounded typed local JSON. Restored conversations start a fresh Pi process and replay bounded text context. The default view remains a blank document with both sidebars hidden. Portable macOS data resides beside the .app, outside its signed bundle. CI prepares pinned sidecars; release workflows create portable archives and draft releases on tags.

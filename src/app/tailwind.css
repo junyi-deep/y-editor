@@ -1,0 +1,72 @@
+/*
+ * Tailwind for the shadcn-vue component layer — see docs/ADR/0007.
+ *
+ * Only `theme` and `utilities` are imported. Preflight is deliberately absent:
+ * it resets list markers, blockifies inline images and rewrites borders, all of
+ * which the Markdown document and the toolbar get from user-agent defaults this
+ * project never declared. Author-layer CSS beats UA styles, so preflight would
+ * win outright and change the writing surface.
+ */
+@layer theme, base, components, utilities;
+@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/utilities.css" layer(utilities);
+
+/* Theme is chosen by the app (preset + light/dark/system), not by the OS
+   preference alone, so the dark variant follows the resolved appearance. */
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
+/* The one preflight rule the components need: a utility can add a single
+   border edge only if the others start at zero. */
+@layer base {
+  *,
+  ::before,
+  ::after {
+    border-style: solid;
+    border-width: 0;
+  }
+}
+
+/* Explicit source: this project has no git index and ships a dist/ tree, so
+   automatic detection would scan the wrong things. */
+@source "./..";
+
+/*
+ * `inline` is required, not stylistic: the eight theme presets rewrite --y-*
+ * on .app-shell at runtime, so a non-inline theme would resolve these once at
+ * :root and a preset switch would never recolour a component.
+ *
+ * --y-accent is the brand colour and maps to --primary. shadcn's own --accent
+ * is the hover surface, so it maps to --y-hover.
+ */
+@theme inline {
+  --color-background: var(--y-bg);
+  --color-foreground: var(--y-text);
+  --color-card: var(--y-panel);
+  --color-card-foreground: var(--y-text);
+  --color-popover: var(--y-panel);
+  --color-popover-foreground: var(--y-text);
+  --color-primary: var(--y-accent);
+  --color-primary-foreground: var(--y-accent-ink);
+  --color-secondary: var(--y-hover);
+  --color-secondary-foreground: var(--y-text);
+  --color-muted: var(--y-hover);
+  --color-muted-foreground: var(--y-muted);
+  --color-accent: var(--y-hover);
+  --color-accent-foreground: var(--y-text);
+  --color-destructive: var(--y-danger);
+  --color-destructive-foreground: var(--y-accent-ink);
+  --color-border: var(--y-border);
+  --color-input: var(--y-border);
+  --color-ring: var(--y-accent);
+
+  --radius-sm: var(--y-radius-sm);
+  --radius-md: var(--y-radius-control);
+  --radius-lg: var(--y-radius-popover);
+  --radius-xl: var(--y-radius-window);
+
+  /* Overlays use the app's z ladder; Tailwind's z-N utilities are not used. */
+  --z-menu: var(--y-z-menu);
+  --z-popover: var(--y-z-popover);
+  --z-modal: var(--y-z-modal);
+  --z-modal-top: var(--y-z-modal-top);
+}

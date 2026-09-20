@@ -1,0 +1,540 @@
+/* Desktop writing surfaces: 6px controls, 10px panels, 12px window. */
+:root {
+  font-size: 13px;
+}
+html,
+body,
+#app {
+  height: 100%;
+  background: transparent;
+}
+.app-shell {
+  border-radius: var(--y-radius-window);
+  border: 1px solid var(--y-border);
+  isolation: isolate;
+}
+.app-shell[data-maximized="true"] {
+  border-radius: 0;
+}
+.app-titlebar {
+  height: 40px;
+  padding: 0 12px;
+  border-bottom: 1px solid var(--y-border);
+  gap: 2px;
+}
+.menu-group > button {
+  font-size: 12px;
+  font-weight: 500;
+  padding: 6px 9px;
+  border-radius: var(--y-radius-control);
+}
+.document-title {
+  font-size: 12px;
+  font-weight: 500;
+  max-width: 32%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.window-controls button {
+  border-radius: var(--y-radius-control);
+}
+.window-controls button:hover {
+  background: var(--y-hover);
+}
+.window-controls button:last-child:hover {
+  color: var(--y-accent-ink);
+  background: var(--y-danger);
+}
+button {
+  transition:
+    background-color var(--y-ease),
+    color var(--y-ease);
+}
+input,
+select,
+textarea {
+  border-radius: var(--y-radius-control);
+}
+.file-sidebar {
+  background: var(--y-panel);
+}
+.sidebar-tabs {
+  min-height: 48px;
+  padding: 8px 10px;
+  gap: 4px;
+  border-bottom: 0;
+  align-items: center;
+}
+.sidebar-tabs button {
+  height: 28px;
+  border-radius: var(--y-radius-control);
+  border-bottom: 0;
+  font-weight: 500;
+  padding: 0 10px;
+}
+.sidebar-tabs button:hover {
+  background: var(--y-hover);
+  color: var(--y-text);
+}
+/* One active affordance: the pill. The underline was a second, redundant one. */
+.sidebar-tabs button.active {
+  background: var(--y-selected);
+  border-bottom: 0;
+  color: var(--y-text);
+}
+.tree-item {
+  border-radius: var(--y-radius-control);
+  width: calc(100% - 12px);
+  margin: 0 6px;
+  /* The file-tree virtualiser reads the same token, so the row box and the
+     spacer it positions can never disagree. */
+  min-height: var(--y-row-height);
+  font-size: var(--y-font-md);
+}
+.tree-item.selected {
+  background: color-mix(in srgb, var(--y-accent) 12%, var(--y-panel));
+  color: var(--y-text);
+}
+.sidebar-filter-bottom {
+  margin: auto 10px 12px;
+  padding: 0;
+  gap: 4px;
+}
+.sidebar-filter input {
+  height: 32px;
+  background: var(--y-bg);
+  border: 1px solid var(--y-border);
+  border-radius: var(--y-radius-control);
+  padding: 0 9px;
+  font-size: var(--y-font-ui);
+}
+.sidebar-empty {
+  padding: 28px 18px;
+  color: var(--y-muted);
+  line-height: 1.7;
+}
+.sidebar-empty button {
+  padding: 8px 12px;
+  border: 1px solid var(--y-border);
+  border-radius: var(--y-radius-control);
+}
+.outline-row {
+  min-height: 30px;
+  margin: 0 6px;
+  border-radius: var(--y-radius-control);
+}
+.outline-list {
+  flex: 1;
+  min-height: 0;
+}
+.outline-list .outline-toggle,
+.outline-toggle-spacer {
+  flex: 0 0 20px;
+  width: 20px;
+}
+.outline-number {
+  font-variant-numeric: tabular-nums;
+}
+.menu-popover,
+.file-context,
+.editor-context {
+  border-radius: var(--y-radius-popover);
+  padding: 6px;
+  box-shadow: var(--y-shadow-md);
+}
+.menu-popover button,
+.file-context button,
+.editor-context button {
+  border-radius: var(--y-radius-control);
+  min-height: 30px;
+}
+.document-view-menu {
+  top: 10px;
+  right: 14px;
+}
+.document-view-menu .view-width-toggle {
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  line-height: 24px;
+}
+.document-view-menu .menu-popover {
+  /* Sized by its longest label; the shared 270px leaves half the rows empty. */
+  width: max-content;
+  min-width: 0;
+  max-width: calc(100vw - 32px);
+}
+.shortcut-help {
+  min-width: 220px;
+}
+.ai-panel {
+  font-size: var(--y-font-md);
+}
+.settings-panel {
+  border-radius: var(--y-radius-window);
+  box-shadow: var(--y-shadow-lg);
+}
+.settings-panel > header {
+  min-height: 60px;
+  padding: 18px 24px;
+}
+.settings-panel label {
+  line-height: 1.6;
+}
+.settings-panel input:not([type="checkbox"]):not([type="range"]),
+.settings-panel select {
+  min-height: 32px;
+}
+.milkdown-preview {
+  height: 100%;
+  overflow: hidden;
+}
+.editor-host .milkdown-preview > .milkdown {
+  height: 100%;
+  overflow: hidden;
+}
+.editor-host .milkdown-document {
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+  padding: 44px max(36px, calc((100% - var(--y-editor-width)) / 2 + 36px)) 100px;
+  font: var(--y-font-size) / var(--y-line-height) var(--y-font-family);
+  color: var(--y-text);
+  caret-color: var(--y-text);
+  tab-size: 4;
+  outline: none;
+}
+.editor-host .milkdown-document > :first-child {
+  margin-top: 0;
+}
+/* Heading sizes live with the rest of the prose scale in styles.css. */
+.editor-host .milkdown-document h1 {
+  letter-spacing: -0.025em;
+  border-bottom: 0;
+}
+.editor-host .milkdown-document h2 {
+  border-bottom: 0;
+}
+.milkdown-document p {
+  overflow-wrap: anywhere;
+}
+.milkdown-document table {
+  width: 100%;
+  table-layout: fixed;
+}
+.milkdown-document td,
+.milkdown-document th {
+  position: relative;
+  min-width: 48px;
+}
+.milkdown-document li p {
+  margin: 0;
+}
+.editor-host .milkdown-document td p,
+.editor-host .milkdown-document th p {
+  margin: 0;
+}
+.milkdown-document .task-list-item {
+  list-style: none;
+  position: relative;
+}
+.task-list-item > input {
+  position: absolute;
+  left: -22px;
+  top: 5px;
+  margin: 0;
+  width: 14px;
+  height: 14px;
+  accent-color: var(--y-accent);
+}
+.milkdown-document
+  > p:only-child:has(> br.ProseMirror-trailingBreak:only-child)::before {
+  content: "开始写作…";
+  color: var(--y-muted);
+  pointer-events: none;
+  position: absolute;
+}
+.milkdown-document .selectedCell::after {
+  background: color-mix(in srgb, var(--y-accent) 18%, transparent);
+  border: 1px solid color-mix(in srgb, var(--y-accent) 55%, transparent);
+  pointer-events: none;
+}
+.milkdown-document td,
+.milkdown-document th {
+  cursor: cell;
+}
+/* Columns are dragged by their header; rows by this strip, which sits inside
+   the cell's padding. The cursor is what makes the handle discoverable. */
+.milkdown-document td::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 6px;
+  cursor: row-resize;
+}
+.milkdown-document td p,
+.milkdown-document th p {
+  cursor: text;
+}
+/* The task marker is a real <input type=checkbox> inside .task-list-item; the
+   old Unicode ☐/☑ pseudo-element keyed off data-checked, which Milkdown never
+   sets, so it drew a second marker next to the real one. */
+.milkdown-document li.task-list-item:has(input[type="checkbox"]:checked) {
+  color: var(--y-muted);
+}
+.y-code-block {
+  margin: 1.2em 0;
+  border: 1px solid var(--y-border);
+  border-radius: var(--y-radius-popover);
+  background: var(--y-panel);
+  overflow: hidden;
+}
+.code-language {
+  display: block;
+  width: 100%;
+  border: 0;
+  border-bottom: 1px solid var(--y-border);
+  background: transparent;
+  font-size: var(--y-font-sm);
+  color: var(--y-muted);
+  padding: 8px 12px;
+}
+.milkdown-source {
+  height: 100%;
+}
+.milkdown-source > .cm-editor {
+  height: 100%;
+}
+.cm-editor {
+  background: transparent;
+  font-size: var(--y-font-md);
+  color: var(--y-text);
+}
+.cm-editor .cm-scroller {
+  font-family: "SFMono-Regular", Consolas, monospace;
+  line-height: 1.65;
+}
+.cm-editor .cm-content {
+  padding: 12px 0;
+  caret-color: var(--y-text);
+}
+.cm-editor .cm-gutters {
+  background: transparent;
+  color: var(--y-muted);
+  border: 0;
+}
+.cm-editor .cm-activeLine,
+.cm-editor .cm-activeLineGutter {
+  background: color-mix(in srgb, var(--y-accent) 5%, transparent);
+}
+.cm-editor.cm-focused {
+  outline: none;
+}
+.cm-editor .cm-cursor {
+  border-left-color: var(--y-text);
+}
+.cm-editor .cm-selectionBackground,
+.cm-editor.cm-focused .cm-selectionBackground {
+  background: color-mix(in srgb, var(--y-accent) 20%, transparent);
+}
+[data-theme="dark"] .cm-editor {
+  filter: none;
+}
+.mermaid-render {
+  position: relative;
+  padding: 12px 12px 0;
+  background: var(--y-bg);
+}
+.mermaid-render .diagram-controls {
+  opacity: 0;
+  transition: opacity 120ms;
+}
+.mermaid-render:hover .diagram-controls,
+.mermaid-render:focus-within .diagram-controls {
+  opacity: 1;
+}
+.y-math {
+  cursor: text;
+  overflow-x: auto;
+}
+.y-math textarea {
+  width: 100%;
+  font-family: monospace;
+}
+.y-focus .milkdown-document > :not(.y-current-block) {
+  opacity: 0.3;
+}
+.y-typewriter .milkdown-document {
+  padding-bottom: 50vh;
+}
+.milkdown-document img {
+  max-width: 100%;
+}
+.milkdown-preview[hidden],
+.milkdown-source[hidden],
+.y-code-block [hidden] {
+  display: none !important;
+}
+@media (max-width: 900px) {
+  .editor-host .milkdown-document {
+    padding: 40px 24px 80px;
+  }
+  .document-title {
+    display: none;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition: none !important;
+    animation: none !important;
+  }
+}
+@media print {
+  .app-shell {
+    border: 0;
+    border-radius: 0;
+  }
+  .editor-host .milkdown-document,
+  .milkdown-preview,
+  .milkdown {
+    height: auto !important;
+    overflow: visible !important;
+  }
+  .code-language,
+  .diagram-controls,
+  .diagram-hint {
+    display: none !important;
+  }
+}
+
+/* ---- macOS chrome and surfaces ---------------------------------------- */
+
+/* Window controls exist for the browser preview only; on macOS the traffic
+   lights are real, drawn by AppKit at (20, 18) over the transparent window. */
+.app-shell.native-chrome .app-titlebar {
+  height: var(--y-titlebar-h);
+  padding: 0 14px;
+  /* The native titlebar has no divider; a hairline reads as a drawn bar. */
+  border-bottom: 0;
+}
+.menu-bar {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+.window-controls button {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: var(--y-control-h-sm);
+  color: var(--y-muted);
+}
+.window-controls .ui-icon {
+  width: var(--y-icon-sm);
+  height: var(--y-icon-sm);
+}
+
+/* One status bar. Three earlier blocks disagreed on its height (26/42/28px)
+   and its control size (36px and 18px); whatever rendered was load order. */
+.statusbar {
+  height: var(--y-statusbar-h);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  position: relative;
+  padding: 0 10px;
+  gap: 6px;
+  font-size: var(--y-font-sm);
+  font-variant-numeric: tabular-nums;
+  color: var(--y-muted);
+  background: var(--y-panel);
+}
+.status-tools {
+  display: flex;
+  gap: 2px;
+  flex-shrink: 0;
+  opacity: 0.85;
+}
+.statusbar:hover .status-tools,
+.statusbar:focus-within .status-tools {
+  opacity: 1;
+}
+.status-tools button,
+.status-ai,
+.word-count,
+.statusbar > button {
+  display: grid;
+  place-items: center;
+  min-width: var(--y-control-h-sm);
+  height: var(--y-control-h-sm);
+  padding: 0 5px;
+  border-radius: var(--y-radius-sm);
+  color: var(--y-muted);
+  white-space: nowrap;
+}
+.status-tools button:hover,
+.status-ai:hover,
+.word-count:hover,
+.statusbar > button:hover {
+  background: var(--y-hover);
+  color: var(--y-text);
+}
+.status-tools button.active,
+.status-ai.active {
+  background: var(--y-selected);
+  color: var(--y-text);
+}
+.status-tools .ui-icon,
+.status-ai .ui-icon {
+  width: var(--y-icon-sm);
+  height: var(--y-icon-sm);
+}
+
+/* The parts of the surface nobody draws still carry the design: selection,
+   the caret, scrollbars and placeholders. */
+::selection {
+  background: color-mix(in srgb, var(--y-accent) 28%, transparent);
+}
+/* Scrollbars are deliberately NOT restyled on the web target: macOS draws
+   overlay scrollbars that fade in on scroll, and any ::-webkit-scrollbar width
+   would pin a permanent gutter in their place. This only tints the non-WebKit
+   fallback. */
+* {
+  scrollbar-color: color-mix(in srgb, var(--y-text) 22%, transparent) transparent;
+}
+::placeholder {
+  color: color-mix(in srgb, var(--y-muted) 82%, transparent);
+}
+
+/* A macOS focus ring: a soft halo rather than an inset outline. The outline
+   stays transparent so Windows High Contrast still gets a real border. */
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid transparent;
+  outline-offset: 1px;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--y-accent) 55%, transparent);
+}
+input[type="checkbox"],
+input[type="radio"] {
+  accent-color: var(--y-accent);
+}
+
+/* List rows read as selected only while the window is key, the way AppKit
+   draws an inactive selection. */
+.app-shell .tree-item.selected {
+  background: color-mix(in srgb, var(--y-accent) 14%, var(--y-panel));
+}
+.app-shell[data-window-active="false"] .tree-item.selected {
+  background: var(--y-selected);
+}
+
+/* Code is code: the system mono stack on macOS, not a web font guess. */
+.cm-editor .cm-scroller,
+.milkdown-source > .cm-editor .cm-scroller {
+  font-family: ui-monospace, "SF Mono", SFMono-Regular, Menlo, monospace;
+}
