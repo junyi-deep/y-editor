@@ -104,20 +104,20 @@ fn create_named(
     .title("y-editor")
     .inner_size(1050.0, 780.0)
     .min_inner_size(760.0, 560.0)
-    // Native macOS traffic lights over a transparent window, matching the
-    // main-window configuration in tauri.conf.json.
     .decorations(true)
-    .title_bar_style(tauri::TitleBarStyle::Overlay)
-    .hidden_title(true)
     .transparent(true)
     .visible(false);
-    // A new window does not inherit the config's traffic-light placement, and
-    // the titlebar layout assumes this inset.
+    // Native macOS traffic lights over a transparent window, matching the
+    // main-window configuration in tauri.conf.json. These three builder methods
+    // are `#[cfg(target_os = "macos")]` in tauri itself, so the chain is split
+    // rather than written inline — the Windows build rejects them outright.
     #[cfg(target_os = "macos")]
-    let result = builder
-        .traffic_light_position(tauri::LogicalPosition::new(20.0, 18.0))
-        .build();
-    #[cfg(not(target_os = "macos"))]
+    let builder = builder
+        .title_bar_style(tauri::TitleBarStyle::Overlay)
+        .hidden_title(true)
+        // A new window does not inherit the config's traffic-light placement,
+        // and the titlebar layout assumes this inset.
+        .traffic_light_position(tauri::LogicalPosition::new(20.0, 18.0));
     let result = builder.build();
     if let Err(e) = result {
         app.state::<Windows>()
