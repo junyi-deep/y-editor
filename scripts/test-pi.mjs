@@ -356,9 +356,26 @@ for (const [protocol, bridge, failure, multimodal] of [
         }
       } finally {
         child.kill();
+        // Wait for the child to actually exit before touching its directory:
+        // on Windows a killed process keeps handles open for a moment, and
+        // removing underneath it fails with EBUSY.
+        await new Promise((resolve) => {
+          if (child.exitCode !== null || child.signalCode !== null) {
+            resolve();
+            return;
+          }
+          child.once("exit", resolve);
+          setTimeout(resolve, 5000).unref();
+        });
         server.closeAllConnections();
         await new Promise((resolve) => server.close(resolve));
-        await rm(directory, { recursive: true, force: true });
+        // Retries cover the remaining Windows locks (indexer, antivirus).
+        await rm(directory, {
+          recursive: true,
+          force: true,
+          maxRetries: 10,
+          retryDelay: 100,
+        });
       }
     },
   );
