@@ -22,5 +22,5 @@ export default ts.config(
     languageOptions: { globals: { window: 'readonly', document: 'readonly', navigator: 'readonly', File: 'readonly', FileReader: 'readonly', Element: 'readonly', HTMLImageElement: 'readonly', ClipboardEvent: 'readonly', DragEvent: 'readonly', MouseEvent: 'readonly', MutationObserver: 'readonly', IntersectionObserver: 'readonly', HTMLElement: 'readonly', setTimeout: 'readonly', clearTimeout: 'readonly' } },
     rules: { 'no-undef': 'off', '@typescript-eslint/no-explicit-any': 'error' },
   },
-  { files: ['scripts/*.mjs'], languageOptions: { globals: { URL: 'readonly', console: 'readonly', fetch: 'readonly', Buffer: 'readonly', setTimeout:'readonly', clearTimeout:'readonly' } } },
+  { files: ['scripts/*.mjs'], languageOptions: { globals: { URL: 'readonly', console: 'readonly', fetch: 'readonly', Buffer: 'readonly', setTimeout:'readonly', clearTimeout:'readonly', process: 'readonly', WebSocket: 'readonly' } } },
 );

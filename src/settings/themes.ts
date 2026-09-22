@@ -4,11 +4,11 @@ export const themePresets = [
     name: "Typora",
     light: [
       "#ffffff",
-      "#f8f8f8",
-      "#333333",
-      "#888888",
-      "#e5e5e5",
-      "#eeeeee",
+      "#f7f6f3",
+      "#2f3437",
+      "#706e69",
+      "#eaeaea",
+      "#efeeeb",
       "#4183c4",
     ],
     dark: [
@@ -180,7 +180,8 @@ export const themePresets = [
 function accentInk(hex: string) {
   const value = hex.replace("#", "");
   const channel = (index: number) => {
-    const raw = Number.parseInt(value.slice(index * 2, index * 2 + 2), 16) / 255;
+    const raw =
+      Number.parseInt(value.slice(index * 2, index * 2 + 2), 16) / 255;
     return raw <= 0.03928 ? raw / 12.92 : ((raw + 0.055) / 1.055) ** 2.4;
   };
   if (value.length !== 6 || Number.isNaN(channel(0))) return "#ffffff";

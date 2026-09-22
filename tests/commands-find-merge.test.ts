@@ -1,8 +1,15 @@
 import { describe, it, expect } from "vitest";
-import { CommandRegistry, fuzzyScore } from "../src/command-palette/registry";
+import { CommandRegistry, fuzzyScore, shortcutLabel } from "../src/command-palette/registry";
 import { findMatches, replaceMatches } from "../src/editor/markdown/find";
 import { mergePatch } from "../src/ai/merge";
 describe("commands and editing", () => {
+  it("renders stored combos as platform glyphs without touching the binding", () => {
+    expect(shortcutLabel("Mod+q")).toBe("⌘Q");
+    expect(shortcutLabel("Mod+Shift+n")).toBe("⌘⇧N");
+    expect(shortcutLabel("Mod+,")).toBe("⌘,");
+    expect(shortcutLabel("Mod+/")).toBe("⌘/");
+    expect(shortcutLabel()).toBe("");
+  });
   it("does not fire disabled commands and distinguishes modifiers", async () => {
     let calls = 0;
     const registry = new CommandRegistry();

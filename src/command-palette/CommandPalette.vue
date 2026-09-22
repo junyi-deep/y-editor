@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   computed,
   nextTick,
@@ -13,7 +15,12 @@ import { useWorkspaceStore } from "../stores/workspace";
 import { useSettingsStore } from "../stores/settings";
 import { useEditorStore } from "../stores/editor";
 import { backend, call } from "../services/backend";
-import { CommandRegistry, fuzzyScore, type EditorCommand } from "./registry";
+import {
+  CommandRegistry,
+  fuzzyScore,
+  shortcutLabel,
+  type EditorCommand,
+} from "./registry";
 import { themePresets } from "../settings/themes";
 import UiIcon from "../components/UiIcon.vue";
 const props = defineProps<{ registry: CommandRegistry }>();
@@ -95,7 +102,9 @@ watch(
         commands.map((c) => ({
           id: c.id,
           label: c.title,
-          detail: c.shortcut ?? c.category,
+          // A command without a shortcut shows nothing here: the category is
+          // not a key combination and must not sit in the key chip.
+          detail: c.shortcut ?? "",
           command: true,
         }));
       commandResults.value = map(props.registry.list(query));
@@ -328,7 +337,7 @@ onBeforeUnmount(() => {
           v-model="ui.paletteQuery"
           :placeholder="themeMode ? '搜索主题 · ↑↓ 实时预览' : placeholder"
           aria-label="搜索文件、内容或命令"
-        /><button
+        /><Button
           v-if="ui.paletteQuery"
           aria-label="清空搜索"
           @click="
@@ -337,26 +346,26 @@ onBeforeUnmount(() => {
           "
         >
           ×
-        </button>
+        </Button>
       </div>
       <nav class="palette-modes">
-        <button :class="{ active: mode === 'files' }" @click="setMode('files')">
-          搜索文件</button
-        ><button
+        <Button :class="{ active: mode === 'files' }" @click="setMode('files')">
+          搜索文件</Button
+        ><Button
           :class="{ active: mode === 'content' }"
           @click="setMode('content')"
         >
-          搜索内容</button
-        ><button
+          搜索内容</Button
+        ><Button
           :class="{ active: mode === 'commands' }"
           @click="setMode('commands')"
         >
           搜索命令
-        </button>
+        </Button>
       </nav>
       <p v-if="error" class="palette-error" role="alert">{{ error }}</p>
       <div ref="resultsHost" class="palette-results">
-        <button
+        <Button
           v-for="(item, index) in items"
           :key="item.id"
           :class="{ selected: index === selected }"
@@ -370,10 +379,10 @@ onBeforeUnmount(() => {
           /><span class="palette-item-text"
             ><span>{{ item.label }}</span
             ><small v-if="!item.command">{{ item.detail }}</small></span
-          ><kbd v-if="item.command" class="palette-shortcut">{{
-            item.detail
+          ><kbd v-if="item.command && item.detail" class="palette-shortcut">{{
+            shortcutLabel(item.detail)
           }}</kbd>
-        </button>
+        </Button>
         <p v-if="busy">搜索中…</p>
 
         <p v-else-if="!items.length">
@@ -394,7 +403,7 @@ onBeforeUnmount(() => {
         ><label
           v-if="mode === 'content' && settings.value.paletteRegex"
           class="palette-regex"
-          ><input v-model="regex" type="checkbox" />正则</label
+          ><Checkbox v-model="regex" aria-label="正则" />正则</label
         >
       </footer>
       <div
@@ -405,12 +414,12 @@ onBeforeUnmount(() => {
         @keydown.stop
         @keydown.esc="contextMenu = null"
       >
-        <button role="menuitem" @click="fileAction('copy')">复制文件路径</button
-        ><button role="menuitem" @click="fileAction('reveal')">
-          在文件管理器中打开</button
-        ><button role="menuitem" @click="fileAction('open')">
-          使用系统应用打开</button
-        ><button role="menuitem" @click="fileAction('trash')">删除文件…</button>
+        <Button role="menuitem" @click="fileAction('copy')">复制文件路径</Button
+        ><Button role="menuitem" @click="fileAction('reveal')">
+          在文件管理器中打开</Button
+        ><Button role="menuitem" @click="fileAction('open')">
+          使用系统应用打开</Button
+        ><Button role="menuitem" @click="fileAction('trash')">删除文件…</Button>
       </div>
     </section>
   </div>

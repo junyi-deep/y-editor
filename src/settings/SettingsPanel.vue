@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
+import { Button } from "@/components/ui/button";
 import { computed, ref, onMounted, onBeforeUnmount } from "vue";
 import ResourcesPanel from "./ResourcesPanel.vue";
 import { trapDialogTab } from "../services/focus";
@@ -94,32 +97,30 @@ async function close() {
     >
       <header>
         <h2>偏好设置</h2>
-        <button aria-label="关闭设置" @click="close">
+        <Button aria-label="关闭设置" @click="close">
           <UiIcon name="close" />
-        </button>
+        </Button>
       </header>
       <div class="settings-body">
         <nav>
-          <input
+          <Input
             v-model="filter"
             placeholder="搜索设置"
             aria-label="搜索设置"
-          /><button
+          /><Button
             v-for="name in shown"
             :key="name"
             :class="{ active: category === name }"
             @click="category = name"
           >
             {{ name }}
-          </button>
+          </Button>
         </nav>
         <div class="settings-content">
           <template v-if="category === '通用'"
             ><h3>文件与保存</h3>
             <label class="setting-row"
-              >自动保存<input
-                v-model="settings.value.autosave"
-                type="checkbox" /></label
+              >自动保存<Switch v-model="settings.value.autosave" /></label
             ><label class="setting-row"
               >保存延迟（毫秒）<input
                 v-model.number="settings.value.autosaveDelay"
@@ -132,46 +133,40 @@ async function close() {
               已命名文件在停止输入后自动保存。未命名文档会保存恢复草稿。
             </p>
             <label class="setting-row"
-              >启动时显示侧栏<input
-                v-model="settings.value.sidebar"
-                type="checkbox" /></label
+              >启动时显示侧栏<Switch v-model="settings.value.sidebar" /></label
           ></template>
-          <template v-if="category === '编辑器'"
-            ><label class="checkbox-row"
-              ><input
-                v-model="settings.value.renderLargeDiagrams"
-                type="checkbox"
-              />自动渲染大型 Mermaid 图表</label
-            >
+          <template v-if="category === '编辑器'">
             <h3>编辑器</h3>
+            <label class="setting-row">自动渲染大型 Mermaid 图表<Switch v-model="settings.value.renderLargeDiagrams" /></label>
             <label class="setting-row"
-              >附件目录<input
+              >附件目录<Input
                 v-model="settings.value.attachmentFolder"
                 placeholder="assets"
             /></label>
             <label class="setting-row"
-              >粘贴时询问文件名<input
-                v-model="settings.value.pastePrompt"
-                type="checkbox"
+              >粘贴时询问文件名<Switch v-model="settings.value.pastePrompt"
             /></label>
             <label class="setting-row"
-              >允许其他附件<input
-                v-model="settings.value.allowAttachments"
-                type="checkbox"
+              >允许其他附件<Switch v-model="settings.value.allowAttachments"
             /></label>
             <label class="setting-row"
-              >大纲显示层级序号<input
+              >大纲显示层级序号<Switch
                 v-model="settings.value.outlineNumbering"
-                type="checkbox"
             /></label>
             <label class="setting-row"
-              >正文字体<select v-model="settings.value.fontFamily">
-                <option value="sans-serif">系统无衬线</option>
-                <option value="serif">系统衬线</option>
-                <option value="monospace">等宽字体</option>
-                <option value="'PingFang SC', sans-serif">苹方</option>
-                <option value="'Songti SC', serif">宋体</option>
-              </select></label
+              >正文字体<Select v-model="settings.value.fontFamily"
+                ><SelectTrigger aria-label="正文字体"
+                  ><SelectValue placeholder="选择类型" /></SelectTrigger
+                ><SelectContent>
+                  <SelectItem value="sans-serif">系统无衬线</SelectItem>
+                  <SelectItem value="serif">系统衬线</SelectItem>
+                  <SelectItem value="monospace">等宽字体</SelectItem>
+                  <SelectItem value="'PingFang SC', sans-serif"
+                    >苹方</SelectItem
+                  >
+                  <SelectItem value="'Songti SC', serif">宋体</SelectItem>
+                </SelectContent></Select
+              ></label
             ><label class="setting-row"
               >字号<input
                 v-model.number="settings.value.fontSize"
@@ -193,15 +188,11 @@ async function close() {
                 max="1400"
                 step="20" /></label
             ><label class="setting-row"
-              >拼写检查<input
-                v-model="settings.value.spellcheck"
-                type="checkbox" /></label
+              >拼写检查<Switch v-model="settings.value.spellcheck" /></label
             ><label class="setting-row"
-              >专注模式<input v-model="ui.focus" type="checkbox" /></label
+              >专注模式<Switch v-model="ui.focus" /></label
             ><label class="setting-row"
-              >打字机模式<input
-                v-model="ui.typewriter"
-                type="checkbox" /></label
+              >打字机模式<Switch v-model="ui.typewriter" /></label
           ></template>
           <template v-if="category === '快捷面板'"
             ><h3>快捷面板</h3>
@@ -225,9 +216,8 @@ async function close() {
                 "
             /></label>
             <label class="checkbox-row"
-              ><input
+              ><Switch
                 v-model="settings.value.paletteRegex"
-                type="checkbox"
               />启用正则内容搜索（默认开启）</label
             >
             <p class="help">关闭后按普通文本匹配。搜索最多显示 1–1000 条。</p>
@@ -260,13 +250,13 @@ async function close() {
               </Select></label
             ><label class="setting-row"
               >应用背景图片<span
-                ><button @click="importBackground">选择图片…</button
-                ><button
+                ><Button @click="importBackground">选择图片…</Button
+                ><Button
                   v-if="settings.value.backgroundImage"
                   @click="settings.value.backgroundImage = ''"
                 >
                   移除
-                </button></span
+                </Button></span
               ></label
             >
             <label class="setting-row"
@@ -285,13 +275,13 @@ async function close() {
               样式实时作用于正在编辑的文档。使用 .vditor-reset
               选择正文；兼容导入的 #write 选择器。
             </p>
-            <button class="css-open-button" @click="cssOpen = true">
+            <Button class="css-open-button" @click="cssOpen = true">
               自定义 CSS…
-            </button></template
+            </Button></template
           >
           <template v-if="category === 'AI'">
             <nav class="ai-settings-tabs">
-              <button
+              <Button
                 v-for="name in [
                   '模型服务',
                   '知识库',
@@ -305,7 +295,7 @@ async function close() {
                 :class="{ active: aiCategory === name }"
               >
                 {{ name }}
-              </button>
+              </Button>
             </nav>
             <ModelConnections v-if="aiCategory === '模型服务'" />
             <ResourcesPanel v-else :key="aiCategory" :mode="aiCategory" />

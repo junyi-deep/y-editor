@@ -1,4 +1,15 @@
 <script setup lang="ts">
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
 import { onMounted, ref, computed } from "vue";
 import { call } from "../services/backend";
 import ResourcesPanel from "../settings/ResourcesPanel.vue";
@@ -60,9 +71,9 @@ onMounted(refresh);
     >
       <header>
         <h3>工作空间 AI 资源</h3>
-        <button @click="emit('close')">关闭</button>
+        <Button @click="emit('close')">关闭</Button>
       </header>
-      <input v-model="query" placeholder="搜索资源" />
+      <Input v-model="query" placeholder="搜索资源" />
       <table class="settings-table">
         <thead>
           <tr>
@@ -76,10 +87,10 @@ onMounted(refresh);
             <td>{{ item.name }}</td>
             <td>{{ labels[item.kind] }}</td>
             <td>
-              <input
-                type="checkbox"
-                :checked="flags[item.id]"
-                @change="toggle(item.id)"
+              <Checkbox
+                :model-value="flags[item.id]"
+                :aria-label="`启用 ${item.name}`"
+                @update:model-value="toggle(item.id)"
               />
             </td>
           </tr>
@@ -89,16 +100,21 @@ onMounted(refresh);
         </tbody>
       </table>
       <label
-        >添加到全局资源库<select v-model="adding">
-          <option value="">选择类型</option>
-          <option v-for="label in labels" :key="label">{{ label }}</option>
-        </select></label
-      ><ResourcesPanel v-if="adding" :key="adding" :mode="adding" /><button
+        >添加到全局资源库<Select v-model="adding"
+          ><SelectTrigger aria-label="添加资源类型"
+            ><SelectValue placeholder="选择类型" /></SelectTrigger
+          ><SelectContent>
+            <SelectItem v-for="label in labels" :key="label" :value="label">{{
+              label
+            }}</SelectItem>
+          </SelectContent></Select
+        ></label
+      ><ResourcesPanel v-if="adding" :key="adding" :mode="adding" /><Button
         v-if="adding"
         @click="refresh"
       >
         刷新资源列表
-      </button>
+      </Button>
       <p role="alert">{{ error }}</p>
     </section>
   </div>

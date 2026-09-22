@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { computed, ref, onBeforeUnmount } from "vue";
 import type { CommandRegistry } from "../command-palette/registry";
 import { eventShortcut, normalizeShortcut } from "../command-palette/shortcuts";
@@ -62,7 +64,7 @@ function record(event: KeyboardEvent, id: string) {
       点击快捷键框后按下新组合键。Mod 表示 Cmd / Ctrl；按 Backspace
       清除映射，Esc 结束录入。
     </p>
-    <input v-model="filter" placeholder="筛选命令" aria-label="筛选快捷键" />
+    <Input v-model="filter" placeholder="筛选命令" aria-label="筛选快捷键" />
     <p v-if="error" role="alert">{{ error }}</p>
     <div v-for="command in commands" :key="command.id" class="shortcut-row">
       <span
@@ -75,14 +77,14 @@ function record(event: KeyboardEvent, id: string) {
         @focus="ui.shortcutRecording = true"
         @blur="ui.shortcutRecording = false"
         @keydown="record($event, command.id)"
-      /><button
+      /><Button
         title="恢复默认快捷键"
         @click="delete settings.value.shortcuts[command.id]"
       >
         重置
-      </button>
+      </Button>
     </div>
-    <button @click="settings.value.shortcuts = {}">恢复全部默认快捷键</button>
+    <Button @click="settings.value.shortcuts = {}">恢复全部默认快捷键</Button>
   </section>
 </template>
 <style scoped>

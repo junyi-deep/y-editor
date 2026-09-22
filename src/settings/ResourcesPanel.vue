@@ -1,4 +1,15 @@
 <script setup lang="ts">
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
 import { computed, onMounted, ref } from "vue";
 import { call, desktop } from "../services/backend";
 import { choose } from "../services/dialog";
@@ -103,6 +114,13 @@ async function add(kind: string) {
     await call("resource_add", { kind });
     await refresh();
   });
+}
+/** The import list is a checkbox group; the owned Checkbox is boolean, so the
+ * id array is toggled here rather than through v-model. */
+function toggleCandidate(id: string) {
+  const at = selected.value.indexOf(id);
+  if (at < 0) selected.value.push(id);
+  else selected.value.splice(at, 1);
 }
 async function toggle(item: Resource) {
   await run(async () => {
@@ -215,7 +233,7 @@ async function discover(server: Server) {
         和提示词作为上下文加载，不执行其中的脚本。更改后当前 AI 连接会重建。
       </p>
       <div class="resource-actions">
-        <button
+        <Button
           v-for="(label, kind) in Object.fromEntries(
             Object.entries(labels).filter(
               ([, label]) => props.mode === '资源' || label === props.mode,
@@ -225,13 +243,13 @@ async function discover(server: Server) {
           :disabled="busy"
           @click="add(kind)"
         >
-          添加{{ label }}</button
-        ><button v-if="props.mode === 'SKILL'" :disabled="busy" @click="scan">
+          添加{{ label }}</Button
+        ><Button v-if="props.mode === 'SKILL'" :disabled="busy" @click="scan">
           扫描本机 SKILL
-        </button>
+        </Button>
       </div>
-      <input v-model="filter" placeholder="搜索名称或标签" />
-      <button
+      <Input v-model="filter" placeholder="搜索名称或标签" />
+      <Button
         v-if="props.mode === '提示词'"
         @click="
           promptId = null;
@@ -240,19 +258,19 @@ async function discover(server: Server) {
         "
       >
         手动添加提示词
-      </button>
+      </Button>
       <form v-if="promptOpen" @submit.prevent="savePrompt">
         <label class="stacked"
-          >名称<input v-model="promptDraft.name" required /></label
+          >名称<Input v-model="promptDraft.name" required /></label
         ><label class="stacked"
-          >标签（逗号分隔）<input v-model="promptDraft.tags" /></label
+          >标签（逗号分隔）<Input v-model="promptDraft.tags" /></label
         ><label class="stacked"
           >提示词<textarea
             v-model="promptDraft.content"
             rows="8"
             required
           /></label
-        ><button>保存</button>
+        ><Button>保存</Button>
       </form>
       <table class="settings-table">
         <thead>
@@ -270,16 +288,16 @@ async function discover(server: Server) {
               {{ item.path }}<small>{{ item.tags?.join(" · ") }}</small>
             </td>
             <td>
-              <input
-                type="checkbox"
-                :checked="item.enabled"
-                @change="toggle(item)"
+              <Checkbox
+                :model-value="item.enabled"
+                :aria-label="`启用 ${item.name}`"
+                @update:model-value="toggle(item)"
               />
             </td>
             <td>
-              <button v-if="item.kind === 'prompt'" @click="editPrompt(item)">
-                编辑</button
-              ><button @click="remove(item)">移除</button>
+              <Button v-if="item.kind === 'prompt'" @click="editPrompt(item)">
+                编辑</Button
+              ><Button @click="remove(item)">移除</Button>
             </td>
           </tr>
           <tr v-if="!filtered.length">
@@ -298,25 +316,28 @@ async function discover(server: Server) {
           v-for="item in candidates"
           :key="item.id"
           class="resource-candidate"
-          ><input v-model="selected" type="checkbox" :value="item.id" />{{
+          ><Checkbox
+            :model-value="selected.includes(item.id)"
+            :aria-label="`选择 ${item.name}`"
+            @update:model-value="toggleCandidate(item.id)" />{{
             item.name
           }}<small>{{ item.path }}</small></label
-        ><button :disabled="busy || !selected.length" @click="importSelected">
-          导入所选（{{ selected.length }}）</button
-        ><button @click="candidates = []">关闭</button>
+        ><Button :disabled="busy || !selected.length" @click="importSelected">
+          导入所选（{{ selected.length }}）</Button
+        ><Button @click="candidates = []">关闭</Button>
       </section>
       <section v-if="props.mode === '知识库'">
         <h3>知识检索</h3>
         <p class="help">
           启用知识库后建立索引；源文件变化后重新建立。检索结果附带文件路径和行号。
         </p>
-        <button :disabled="busy" @click="index">重建本地索引</button>
+        <Button :disabled="busy" @click="index">重建本地索引</Button>
         <form class="resource-actions" @submit.prevent="search">
-          <input
+          <Input
             v-model="query"
             placeholder="搜索知识库"
             aria-label="搜索知识库"
-          /><button :disabled="busy || !query.trim()">搜索</button>
+          /><Button :disabled="busy || !query.trim()">搜索</Button>
         </form>
         <article
           v-for="hit in hits"
@@ -334,7 +355,7 @@ async function discover(server: Server) {
         支持 stdio 与 Streamable HTTP。服务默认关闭；启用即授权 AI
         使用该服务的工具。
       </p>
-      <button @click="edit()">添加服务</button>
+      <Button @click="edit()">添加服务</Button>
       <table class="settings-table">
         <thead>
           <tr>
@@ -350,13 +371,13 @@ async function discover(server: Server) {
             <td>{{ server.transport }}</td>
             <td>{{ server.enabled ? "是" : "否" }}</td>
             <td>
-              <button
+              <Button
                 :disabled="!server.enabled || busy"
                 @click="discover(server)"
               >
-                工具</button
-              ><button @click="edit(server)">编辑</button
-              ><button @click="removeServer(server)">移除</button>
+                工具</Button
+              ><Button @click="edit(server)">编辑</Button
+              ><Button @click="removeServer(server)">移除</Button>
             </td>
           </tr>
           <tr v-if="!servers.length">
@@ -366,30 +387,34 @@ async function discover(server: Server) {
       </table>
       <form v-if="draft" @submit.prevent="saveServer">
         <label class="stacked"
-          >名称<input v-model="draft.name" required /></label
+          >名称<Input v-model="draft.name" required /></label
         ><label class="stacked"
-          >传输<select v-model="draft.transport">
-            <option value="stdio">stdio</option>
-            <option value="http">Streamable HTTP</option>
-          </select></label
+          >传输<Select v-model="draft.transport"
+            ><SelectTrigger aria-label="传输"
+              ><SelectValue placeholder="选择类型" /></SelectTrigger
+            ><SelectContent>
+              <SelectItem value="stdio">stdio</SelectItem>
+              <SelectItem value="http">Streamable HTTP</SelectItem>
+            </SelectContent></Select
+          ></label
         ><template v-if="draft.transport === 'stdio'"
           ><label class="stacked"
-            >可执行文件<input
+            >可执行文件<Input
               v-model="draft.command"
               required
               placeholder="/absolute/path/to/server" /></label
           ><label class="stacked"
-            >参数（JSON 数组）<input
+            >参数（JSON 数组）<Input
               v-model="args"
               placeholder='["--port", "3000"]' /></label
           ><label class="stacked"
-            >工作目录<input v-model="draft.cwd" /></label></template
+            >工作目录<Input v-model="draft.cwd" /></label></template
         ><label v-else class="stacked"
-          >服务 URL<input v-model="draft.url" type="url" required /></label
+          >服务 URL<Input v-model="draft.url" type="url" required /></label
         ><label class="setting-row"
-          >允许 AI 调用<input v-model="draft.enabled" type="checkbox" /></label
-        ><button :disabled="busy">保存</button
-        ><button type="button" @click="draft = null">取消</button>
+          >允许 AI 调用<Checkbox v-model="draft.enabled" /></label
+        ><Button :disabled="busy">保存</Button
+        ><Button type="button" @click="draft = null">取消</Button>
       </form>
       <article
         v-for="tool in tools"

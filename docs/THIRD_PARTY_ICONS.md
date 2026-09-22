@@ -4,3 +4,7 @@
 - Material file/folder/UI glyphs: Google Material Design Icons, Apache 2.0. https://github.com/google/material-design-icons . Reference file glyph: `src/action/description/materialicons/24px.svg`. Paths are embedded in `src/components/UiIcon.vue` for offline rendering.
 - Application icon: original repository SVG at `src/assets/app-icon.svg`, folded-paper Y design; generated platform assets via `pnpm tauri icon src/assets/app-icon.svg`.
 - UI glyphs inside copied shadcn-vue components (check, chevron and the other control marks): Lucide 1.47.0 via `@lucide/vue`, ISC licence. https://lucide.dev . Chosen because it is a single stroked monochrome set at one weight, which is what the macOS-style pass needs; the earlier Material fills in `UiIcon.vue` are being replaced by it. `lucide-vue-next` is deprecated upstream — use `@lucide/vue`.
+
+## 2026-09-21 icon system update
+
+Application chrome and copied shadcn-vue controls now use `@phosphor-icons/vue` 2.2.1 (MIT), Bold weight. This supersedes the previous Lucide application icon mapping. Existing OpenAI brand mark attribution remains unchanged. Upstream: https://github.com/phosphor-icons/vue.

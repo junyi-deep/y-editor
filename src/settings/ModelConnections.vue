@@ -1,4 +1,16 @@
 <script setup lang="ts">
+import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
+import { Button } from "@/components/ui/button";
+import ModelPicker from "@/components/ModelPicker.vue";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
 import { onMounted, ref } from "vue";
 import { useSettingsStore } from "../stores/settings";
 import { call } from "../services/backend";
@@ -117,15 +129,15 @@ onMounted(() => {
         <td>{{ profile.name }}</td>
         <td>{{ profile.provider.model }}</td>
         <td>
-          <button @click="edit(profile.provider.apiKeyRef)">编辑</button
-          ><button
+          <Button @click="edit(profile.provider.apiKeyRef)">编辑</Button
+          ><Button
             @click="
               settings.value.ai = { ...profile.provider };
               settings.persist();
             "
           >
-            设为默认</button
-          ><button
+            设为默认</Button
+          ><Button
             @click="
               remove(profile.provider.apiKeyRef).catch(
                 (e) => (message = String(e)),
@@ -133,7 +145,7 @@ onMounted(() => {
             "
           >
             删除
-          </button>
+          </Button>
         </td>
       </tr>
       <tr v-if="!settings.value.providerProfiles.length">
@@ -141,34 +153,38 @@ onMounted(() => {
       </tr>
     </tbody>
   </table>
-  <button @click="create">新增连接</button>
-  <label class="stacked">连接名称<input v-model="name" /></label>
+  <Button @click="create">新增连接</Button>
+  <label class="stacked">连接名称<Input v-model="name" /></label>
+  <label class="setting-row">启用<Switch v-model="provider.enabled" /></label>
   <label class="setting-row"
-    >启用<input v-model="provider.enabled" type="checkbox"
-  /></label>
-  <label class="setting-row"
-    >协议<select v-model="provider.protocol">
-      <option value="openai-compatible">OpenAI compatible</option>
-      <option value="anthropic-compatible">Anthropic compatible</option>
-    </select></label
+    >协议<Select v-model="provider.protocol"
+      ><SelectTrigger aria-label="协议"
+        ><SelectValue placeholder="选择类型" /></SelectTrigger
+      ><SelectContent>
+        <SelectItem value="openai-compatible">OpenAI compatible</SelectItem>
+        <SelectItem value="anthropic-compatible"
+          >Anthropic compatible</SelectItem
+        >
+      </SelectContent></Select
+    ></label
   >
-  <label class="stacked">Base URL<input v-model="provider.baseUrl" /></label>
+  <label class="stacked">Base URL<Input v-model="provider.baseUrl" /></label>
   <label class="stacked"
-    >API Key<input
+    >API Key<Input
       v-model="key"
       type="password"
       autocomplete="off"
       placeholder="留空保留已有密钥"
   /></label>
   <label class="stacked"
-    >默认模型<input
+    >默认模型<ModelPicker
       v-model="provider.model"
-      list="connection-models" /><datalist id="connection-models">
-      <option v-for="model in models" :key="model" :value="model" /></datalist
-  ></label>
-  <button :disabled="loading" @click="fetchModels">
-    {{ loading ? "获取中…" : "获取模型列表" }}</button
-  ><button class="primary" @click="save">保存连接</button>
+      :models="models"
+      label="默认模型"
+  /></label>
+  <Button :disabled="loading" @click="fetchModels">
+    {{ loading ? "获取中…" : "获取模型列表" }}</Button
+  ><Button class="primary" @click="save">保存连接</Button>
   <p class="help">密钥保存在本地 SQLite 中，请妥善保管 .yeditor 目录。</p>
   <p role="status">{{ message }}</p>
 </template>

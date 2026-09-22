@@ -35,6 +35,24 @@ export class CommandRegistry {
     );
   }
 }
+const GLYPHS: Record<string, string> = {
+  Mod: "⌘",
+  Shift: "⇧",
+  Alt: "⌥",
+  Ctrl: "⌃",
+};
+/**
+ * Read-only rendering of a stored combo for the menus and the palette. The
+ * stored spelling stays `Mod+Shift+n`: that is what the editor binds and what
+ * ShortcutSettings shows while it captures a new combination.
+ */
+export function shortcutLabel(shortcut?: string): string {
+  if (!shortcut) return "";
+  return shortcut
+    .split("+")
+    .map((key) => GLYPHS[key] ?? key.toUpperCase())
+    .join("");
+}
 export function fuzzyScore(query: string, value: string): number {
   if (!query.trim()) return 0;
   let score = 0;

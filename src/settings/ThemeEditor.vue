@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { Button } from "@/components/ui/button";
 import { reactive } from "vue";
 import { useSettingsStore } from "../stores/settings";
 import { call } from "../services/backend";
@@ -144,9 +145,9 @@ async function exportCss() {
       修改后实时预览当前文档。字体、字号、行高和正文宽度在“编辑器”设置中调整。
     </p>
     <div class="theme-actions">
-      <button @click="importCss">导入 Typora CSS…</button
-      ><button @click="exportCss">导出 CSS…</button
-      ><button @click="settings.value.customCss = ''">恢复默认主题</button>
+      <Button @click="importCss">导入 Typora CSS…</Button
+      ><Button @click="exportCss">导出 CSS…</Button
+      ><Button @click="settings.value.customCss = ''">恢复默认主题</Button>
     </div>
     <details>
       <summary>排版与颜色</summary>

@@ -52,9 +52,9 @@ body {
    onto the document root), so the values here are the light-theme defaults. */
 :root {
   --y-bg: #fff;
-  --y-panel: #fafafa;
+  --y-panel: #f7f6f3;
   --y-text: #333;
-  --y-muted: #888;
+  --y-muted: #706e69;
   --y-border: #e6e6e6;
   --y-hover: #eee;
   --y-selected: #e3e3e3;
@@ -63,7 +63,9 @@ body {
      preset from the accent's luminance. */
   --y-accent: #4183c4;
   --y-accent-ink: #ffffff;
-  --y-danger: #c8443c;
+  /* 5.13:1 on --y-panel. The previous #c8443c measured 4.47:1, just under the
+     4.5:1 AA floor for the error text this token colours. */
+  --y-danger: #bc3a33;
   --y-font-size: 16px;
   --y-line-height: 1.6;
   --y-font-family: sans-serif;
@@ -81,9 +83,9 @@ body {
   --y-radius-popover: 10px;
   --y-radius-window: 12px;
   /* One light source: offset downward, tinted cool instead of pure black. */
-  --y-shadow-sm: 0 6px 20px rgb(16 21 29 / 0.1);
-  --y-shadow-md: 0 12px 36px rgb(16 21 29 / 0.14);
-  --y-shadow-lg: 0 24px 80px rgb(16 21 29 / 0.22);
+  --y-shadow-sm: 0 4px 16px rgb(0 0 0 / 0.04);
+  --y-shadow-md: 0 4px 16px rgb(0 0 0 / 0.04);
+  --y-shadow-lg: 0 4px 16px rgb(0 0 0 / 0.04);
   --y-backdrop: rgb(16 21 29 / 0.22);
   --y-backdrop-strong: rgb(8 11 16 / 0.55);
   --y-row-height: 31px;
@@ -93,7 +95,7 @@ body {
   --y-control-h-sm: 20px;
   --y-icon: 15px;
   --y-icon-sm: 13px;
-  --y-titlebar-h: 52px;
+  --y-titlebar-h: 36px;
   --y-statusbar-h: 26px;
   /* Layering: in-flow chrome < editor overlays < anchored menus < modal shades
      < a dialog opened on top of a modal (the CSS editor). */
@@ -115,10 +117,11 @@ body {
   --y-hover: #363636;
   --y-selected: #414141;
   --y-accent: #8ab1db;
-  --y-danger: #e06c62;
-  --y-shadow-sm: 0 6px 20px rgb(0 0 0 / 0.35);
-  --y-shadow-md: 0 12px 36px rgb(0 0 0 / 0.45);
-  --y-shadow-lg: 0 24px 80px rgb(0 0 0 / 0.55);
+  /* 5.05:1 on the dark panel; #e06c62 sat exactly on the 4.5:1 floor. */
+  --y-danger: #e5796f;
+  --y-shadow-sm: 0 4px 16px rgb(0 0 0 / 0.04);
+  --y-shadow-md: 0 4px 16px rgb(0 0 0 / 0.04);
+  --y-shadow-lg: 0 4px 16px rgb(0 0 0 / 0.04);
   --y-backdrop: rgb(0 0 0 / 0.5);
   --y-backdrop-strong: rgb(0 0 0 / 0.72);
 }
@@ -473,7 +476,7 @@ body {
 .conflict-banner {
   padding: 9px 18px;
   background: var(--y-panel);
-  color: #b45534;
+  color: var(--y-danger);
   font-size: 12px;
   border-bottom: 1px solid var(--y-border);
 }
@@ -696,7 +699,7 @@ button.primary {
 }
 .form-message,
 .inline-error {
-  color: #b45534;
+  color: var(--y-danger);
   font-size: 12px;
   line-height: 1.6;
   white-space: pre-wrap;
@@ -753,9 +756,20 @@ button.primary {
   gap: 8px;
   margin: 3px 0;
 }
-.find-bar input:not([type="checkbox"]) {
-  min-width: 50px;
-  flex: 1;
+.find-bar input {
+  /* A find field is a field, not a banner: keeping a readable measure stops the
+     query box from stretching across a wide window. */
+  min-width: 120px;
+  max-width: 260px;
+  flex: 0 1 260px;
+}
+.find-bar label {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.find-bar .ui-icon.is-open {
+  transform: rotate(90deg);
 }
 .find-bar label,
 .find-bar span {
@@ -852,7 +866,7 @@ button.primary {
   margin-right: auto;
 }
 .ai-panel > header button {
-  font-size: 18px;
+  font-size: 12px;
 }
 .ai-model {
   padding: 10px 15px;
@@ -1409,7 +1423,7 @@ button.primary {
 }
 .palette-error {
   padding: 0 16px;
-  color: #b45534;
+  color: var(--y-danger);
 }
 .table-actions {
   display: flex;

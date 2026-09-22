@@ -1,35 +1,39 @@
 <script setup lang="ts">
 import type { Component } from "vue";
 import {
-  Bold,
-  ChevronRight,
-  Code,
-  Ellipsis,
-  FileText,
-  Folder,
-  FolderOpen,
-  History,
-  Italic,
-  Keyboard,
-  Link,
-  ListTree,
-  Maximize2,
-  Minus,
-  MoveHorizontal,
-  PanelLeft,
-  RefreshCw,
-  Settings,
-  Square,
-  Strikethrough,
-  X,
-} from "@lucide/vue";
+  PhPlus as Plus,
+  PhArrowUp as ArrowUp,
+  PhArrowDown as ArrowDown,
+  PhTextB as Bold,
+  PhCaretRight as ChevronRight,
+  PhCode as Code,
+  PhDotsThree as Ellipsis,
+  PhFileText as FileText,
+  PhFolder as Folder,
+  PhFolderOpen as FolderOpen,
+  PhClockCounterClockwise as History,
+  PhTextItalic as Italic,
+  PhKeyboard as Keyboard,
+  PhLink as Link,
+  PhListBullets as ListTree,
+  PhArrowsOut as Maximize2,
+  PhMinus as Minus,
+  PhArrowsHorizontal as MoveHorizontal,
+  PhSidebar as PanelLeft,
+  PhArrowClockwise as RefreshCw,
+  PhGearSix as Settings,
+  PhSquare as Square,
+  PhTextStrikethrough as Strikethrough,
+  PhX as X,
+} from "@phosphor-icons/vue";
 /**
- * One drawn icon system: Lucide at a single stroke weight, plus the brand marks
+ * One drawn icon system: Phosphor at bold weight, plus the brand marks
  * this project authored. The Unicode stand-ins this replaced (⋯ ☷ ↻ ⛶ B I S ↗ ×)
  * rendered at whatever weight the surrounding font happened to use.
  * See docs/THIRD_PARTY_ICONS.md.
  */
 export type IconName =
+  | "new"
   | "panel"
   | "source"
   | "settings"
@@ -40,6 +44,8 @@ export type IconName =
   | "folder"
   | "folderOpen"
   | "chevron"
+  | "up"
+  | "down"
   | "list"
   | "refresh"
   | "fullscreen"
@@ -55,6 +61,7 @@ export type IconName =
 defineProps<{ name: IconName }>();
 type Drawn = Exclude<IconName, "chatgpt">;
 const icons: Record<Drawn, Component> = {
+  new: Plus,
   panel: PanelLeft,
   source: Code,
   settings: Settings,
@@ -64,6 +71,8 @@ const icons: Record<Drawn, Component> = {
   folder: Folder,
   folderOpen: FolderOpen,
   chevron: ChevronRight,
+  up: ArrowUp,
+  down: ArrowDown,
   list: ListTree,
   refresh: RefreshCw,
   fullscreen: Maximize2,
@@ -78,7 +87,7 @@ const icons: Record<Drawn, Component> = {
   maximize: Square,
 };
 const isBrand = (name: IconName) => name in BRAND;
-/** The brand marks are the only names without a Lucide component. */
+/** The brand marks are the only names without a Phosphor component. */
 const drawn = (name: IconName) => icons[name as Drawn];
 /** Simple Icons `openai.svg`, CC0 — see docs/THIRD_PARTY_ICONS.md. */
 const BRAND: Record<string, string> = {
@@ -98,7 +107,8 @@ const BRAND: Record<string, string> = {
   <component
     :is="drawn(name)"
     v-else
-    class="ui-icon ui-icon--stroke"
+    class="ui-icon"
+    weight="bold"
     aria-hidden="true"
   />
 </template>
@@ -108,15 +118,6 @@ const BRAND: Record<string, string> = {
   height: 20px;
   display: block;
   flex-shrink: 0;
-}
-/* Lucide draws with a stroke; the brand marks ship as filled paths. */
-.ui-icon--stroke {
-  fill: none;
-  stroke: currentColor;
-  /* One stroke weight everywhere; Lucide's own default is 2. */
-  stroke-width: 1.75;
-  stroke-linecap: round;
-  stroke-linejoin: round;
 }
 .ui-icon--brand {
   fill: currentColor;

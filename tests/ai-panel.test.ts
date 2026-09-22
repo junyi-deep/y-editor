@@ -1,15 +1,27 @@
-import { mount, flushPromises } from "@vue/test-utils";
+import { mount } from "@vue/test-utils";
 import { createPinia, setActivePinia } from "pinia";
 import { beforeEach, expect, it, vi } from "vitest";
+import { Select } from "../src/components/ui/select";
 import AiPanel from "../src/ai/AiPanel.vue";
 import { useSettingsStore } from "../src/stores/settings";
 import { useWorkspaceStore } from "../src/stores/workspace";
+import { settle } from "./settle";
 
 const mocks = vi.hoisted(() => ({
   imageRead: vi.fn(async () => "data:image/png;base64,QUJD"),
   listFiles: vi.fn(async () => [
-    { name: "note.md", relative: "note.md", path: "/ws/note.md", directory: false },
-    { name: "shot.png", relative: "shot.png", path: "/ws/shot.png", directory: false },
+    {
+      name: "note.md",
+      relative: "note.md",
+      path: "/ws/note.md",
+      directory: false,
+    },
+    {
+      name: "shot.png",
+      relative: "shot.png",
+      path: "/ws/shot.png",
+      directory: false,
+    },
   ]),
   readDocument: vi.fn(async () => ({ content: "文档正文" })),
   models: vi.fn(async () => ["m-a", "m-b"]),
@@ -36,7 +48,7 @@ async function open() {
     props: { selection: "" },
     attachTo: document.body,
   });
-  await flushPromises();
+  await settle();
   return wrapper;
 }
 
@@ -68,13 +80,14 @@ it("keeps a model typed in the panel when the connection is switched away and ba
   const model = wrapper.get<HTMLInputElement>("input[aria-label='AI 模型']");
   await model.setValue("typed-model");
   await model.trigger("change");
-  await flushPromises();
-  const select = wrapper.get<HTMLSelectElement>("select[aria-label='模型服务连接']");
-  await select.setValue("provider:b");
-  await flushPromises();
+  await model.trigger("keydown", { key: "Escape" });
+  await settle();
+  const select = wrapper.findComponent(Select);
+  select.vm.$emit("update:modelValue", "provider:b");
+  await settle();
   expect(settings.value.ai.model).toBe("m-b");
-  await select.setValue("provider:a");
-  await flushPromises();
+  select.vm.$emit("update:modelValue", "provider:a");
+  await settle();
   expect(settings.value.ai.model).toBe("typed-model");
   wrapper.unmount();
 });
@@ -102,7 +115,7 @@ it("references an image through @ instead of an upload control", async () => {
   const choices = wrapper.findAll(".ai-suggestions button");
   expect(choices).toHaveLength(1);
   await choices[0].trigger("click");
-  await flushPromises();
+  await settle();
   expect(mocks.imageRead).toHaveBeenCalledWith({
     documentPath: "/ws/shot.png",
     source: "/ws/shot.png",

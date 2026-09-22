@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
 import UiIcon from "../components/UiIcon.vue";
 import { computed, ref, watch } from "vue";
 import { useDocumentStore } from "../stores/document";
@@ -67,9 +70,15 @@ function replaceOne() {
 <template>
   <div class="find-bar" @keydown.esc="ui.findOpen = false">
     <div>
-      <button title="替换" @click="replace = !replace">
-        {{ replace ? "▾" : "▸" }}</button
-      ><input
+      <Button
+        :title="replace ? '隐藏替换' : '显示替换'"
+        :aria-label="replace ? '隐藏替换' : '显示替换'"
+        :aria-expanded="replace"
+        @click="replace = !replace"
+      >
+        <UiIcon name="chevron" :class="{ 'is-open': replace }"
+      /></Button>
+      <Input
         v-model="query"
         aria-label="查找"
         placeholder="查找"
@@ -80,28 +89,32 @@ function replaceOne() {
           ? "无效正则"
           : `${result.matches.length ? index + 1 : 0} / ${result.matches.length}`
       }}</span
-      ><label><input v-model="options.caseSensitive" type="checkbox" />Aa</label
-      ><label><input v-model="options.regex" type="checkbox" />.*</label
-      ><button title="上一个" @click="next(-1)">↑</button
-      ><button title="下一个" @click="next()">↓</button
-      ><button aria-label="关闭查找" @click="ui.findOpen = false">
-        <UiIcon name="close" /></button>
+      ><label
+        ><Checkbox v-model="options.caseSensitive" aria-label="区分大小写" />Aa</label
+      ><label><Checkbox v-model="options.regex" aria-label="正则表达式" />.*</label
+      ><Button title="上一个" aria-label="上一个" @click="next(-1)">
+        <UiIcon name="up" /></Button
+      ><Button title="下一个" aria-label="下一个" @click="next()">
+        <UiIcon name="down" /></Button
+      ><Button aria-label="关闭查找" @click="ui.findOpen = false">
+        <UiIcon name="close"
+      /></Button>
     </div>
     <div v-if="replace">
-      <input
+      <Input
         v-model="replacement"
         aria-label="替换为"
         placeholder="替换为"
-      /><button :disabled="!result.matches.length" @click="replaceOne">
-        替换</button
-      ><button
+      /><Button :disabled="!result.matches.length" @click="replaceOne">
+        替换</Button
+      ><Button
         :disabled="!result.matches.length || !!result.error"
         @click="
           doc.update(replaceMatches(doc.content, query, replacement, options))
         "
       >
         全部替换
-      </button>
+      </Button>
     </div>
   </div>
 </template>

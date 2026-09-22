@@ -17,16 +17,26 @@ body,
   border-radius: 0;
 }
 .app-titlebar {
-  height: 40px;
+  height: var(--y-titlebar-h);
+  flex-shrink: 0;
   padding: 0 12px;
   border-bottom: 1px solid var(--y-border);
   gap: 2px;
 }
-.menu-group > button {
+.app-menu-trigger {
   font-size: 12px;
   font-weight: 500;
   padding: 6px 9px;
   border-radius: var(--y-radius-control);
+}
+.titlebar-context {
+  font-size: 11px;
+  color: var(--y-muted);
+  max-width: 26%;
+  padding-left: 4px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .document-title {
   font-size: 12px;
@@ -60,8 +70,10 @@ textarea {
   background: var(--y-panel);
 }
 .sidebar-tabs {
-  min-height: 48px;
-  padding: 8px 10px;
+  /* One chrome row height: the titlebar, the sidebar tabs and the AI header
+     are the same band, so they must not disagree. */
+  min-height: var(--y-titlebar-h);
+  padding: 4px 10px;
   gap: 4px;
   border-bottom: 0;
   align-items: center;
@@ -168,6 +180,12 @@ textarea {
 .shortcut-help {
   min-width: 220px;
 }
+.find-bar {
+  padding: 6px 12px;
+}
+.find-bar > div:last-child {
+  margin-bottom: 0;
+}
 .ai-panel {
   font-size: var(--y-font-md);
 }
@@ -176,8 +194,8 @@ textarea {
   box-shadow: var(--y-shadow-lg);
 }
 .settings-panel > header {
-  min-height: 60px;
-  padding: 18px 24px;
+  min-height: 48px;
+  padding: 0 20px;
 }
 .settings-panel label {
   line-height: 1.6;
@@ -503,7 +521,8 @@ textarea {
    would pin a permanent gutter in their place. This only tints the non-WebKit
    fallback. */
 * {
-  scrollbar-color: color-mix(in srgb, var(--y-text) 22%, transparent) transparent;
+  scrollbar-color: color-mix(in srgb, var(--y-text) 22%, transparent)
+    transparent;
 }
 ::placeholder {
   color: color-mix(in srgb, var(--y-muted) 82%, transparent);
@@ -537,4 +556,436 @@ input[type="radio"] {
 .cm-editor .cm-scroller,
 .milkdown-source > .cm-editor .cm-scroller {
   font-family: ui-monospace, "SF Mono", SFMono-Regular, Menlo, monospace;
+}
+
+/* Shared editorial desktop layout. Document typography remains user-owned. */
+.app-shell {
+  color: var(--y-text);
+}
+.document-title {
+  max-width: 45%;
+}
+.app-shell.native-chrome .app-titlebar {
+  padding-left: 84px;
+}
+button.primary {
+  background: var(--y-text);
+  color: var(--y-bg);
+  border-color: var(--y-text);
+  border-radius: 6px;
+  box-shadow: none;
+}
+button.primary:hover:not(:disabled) {
+  opacity: 0.88;
+}
+button:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+[data-slot="select-trigger"]:focus-visible {
+  outline: 2px solid var(--y-accent);
+  outline-offset: 2px;
+  box-shadow: none;
+}
+kbd {
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  font-size: 11px;
+  color: var(--y-muted);
+}
+[data-slot="dropdown-menu-content"],
+[data-slot="select-content"],
+[data-slot="combobox-list"] {
+  font-size: 13px;
+  border-radius: 8px;
+  box-shadow: var(--y-shadow-sm);
+  max-width: calc(100vw - 24px);
+}
+[data-slot="dropdown-menu-item"],
+[data-slot="select-item"],
+[data-slot="combobox-item"] {
+  min-height: 30px;
+  font-size: 13px;
+}
+[data-slot="select-trigger"] {
+  min-width: 0;
+}
+[data-slot="select-value"] {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.model-picker {
+  min-width: 0;
+  width: 100%;
+}
+.model-options {
+  width: max(200px, var(--reka-combobox-trigger-width));
+  max-height: 260px;
+  overflow-y: auto;
+}
+.model-options [data-slot="combobox-item"] {
+  overflow-wrap: anywhere;
+}
+.ai-panel {
+  background: var(--y-panel);
+  min-width: 0;
+  container-type: inline-size;
+}
+.ai-panel > header {
+  min-height: var(--y-titlebar-h);
+  padding: 4px 12px;
+  gap: 4px;
+  border-bottom: 0;
+}
+.ai-panel > header strong {
+  font-size: 13px;
+  letter-spacing: -0.01em;
+}
+.ai-panel > header button {
+  height: 28px;
+  font-size: 12px;
+  padding: 4px 7px;
+}
+.ai-panel > header .ui-icon {
+  width: 16px;
+  height: 16px;
+}
+.ai-model {
+  display: grid;
+  grid-template-columns: minmax(90px, 0.85fr) minmax(100px, 1.15fr) 28px;
+  gap: 6px;
+  padding: 2px 12px 12px;
+  align-items: center;
+}
+.ai-model > [data-slot="select-trigger"] {
+  width: 100%;
+  padding: 0 8px;
+  font-size: 12px;
+  background: var(--y-bg);
+}
+.ai-model input {
+  width: 100%;
+  font-size: 12px;
+}
+.ai-model > button {
+  margin: 0;
+  padding: 4px;
+}
+.ai-model > button .ui-icon {
+  width: 16px;
+  height: 16px;
+}
+.ai-conversation {
+  padding: 0 16px 16px;
+  scroll-padding-bottom: 16px;
+  /* A flex column so the empty state can be centred; with a transcript in it
+     the content simply starts at the top and scrolls. */
+  display: flex;
+  flex-direction: column;
+}
+.ai-welcome {
+  padding: 8px 0;
+}
+/* The welcome block is sized by its content; centring it in the empty
+   transcript turns the leftover room into deliberate space instead of a gap
+   above the composer. `safe` degrades to start-alignment in a short window, so
+   the block can never be clipped past the top of the scroll area. */
+.ai-conversation.is-empty {
+  justify-content: safe center;
+}
+.ai-welcome h2 {
+  font-size: 15px;
+  line-height: 1.4;
+  letter-spacing: -0.015em;
+  margin: 0 0 6px;
+  font-weight: 600;
+}
+.ai-welcome p {
+  color: var(--y-muted);
+  font-size: 12px;
+  line-height: 1.7;
+  margin: 0 0 14px;
+}
+.ai-starters {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0;
+}
+.ai-starters button {
+  justify-content: flex-start;
+  height: auto;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--y-border);
+  border-radius: 0;
+  text-align: left;
+  font-size: 12px;
+}
+.ai-starters button:last-child {
+  border-bottom: 0;
+}
+.ai-welcome .ai-review-note {
+  font-size: 11px;
+  margin: 14px 0 0;
+}
+.ai-conversation > article {
+  margin: 18px 0;
+  padding: 0;
+  width: 100%;
+  max-width: 100%;
+  border-radius: 0;
+}
+.ai-conversation > article.user {
+  padding: 12px;
+  border: 1px solid var(--y-border);
+  background: var(--y-bg);
+  border-radius: 8px;
+}
+.ai-conversation article small {
+  font-size: 11px;
+  font-weight: 600;
+}
+.ai-conversation article p {
+  line-height: 1.75;
+}
+.ai-usage {
+  padding: 8px 14px;
+  font-size: 11px;
+  line-height: 1.5;
+}
+.ai-input {
+  margin: 0 12px 12px;
+  padding: 10px;
+  border: 1px solid var(--y-border);
+  border-radius: 8px;
+  background: var(--y-bg);
+}
+.ai-input:focus-within {
+  border-color: var(--y-muted);
+}
+.ai-input textarea {
+  min-height: 64px;
+  max-height: 220px;
+  padding: 2px 0 8px;
+  border: 0;
+  border-radius: 0;
+  font-size: 13px;
+  line-height: 1.6;
+  background: transparent;
+  field-sizing: fixed;
+}
+.ai-input textarea:focus-visible {
+  outline: none;
+  box-shadow: none;
+}
+.ai-composer-options {
+  display: flex;
+  gap: 10px;
+  flex-shrink: 0;
+  /* Options sit on the footer row with the send button, so the top of the
+     composer is nothing but the field. */
+  margin-right: auto;
+}
+.ai-composer-options label {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--y-muted);
+}
+.ai-input small {
+  font-size: 10px;
+  color: var(--y-muted);
+  white-space: nowrap;
+}
+.ai-input .ai-actions {
+  border-top: 1px solid var(--y-border);
+  padding-top: 8px;
+  margin-top: 2px;
+  gap: 10px;
+}
+/* Direct child only: the composer's own send/stop button. The option
+   checkboxes are buttons too and must keep their square geometry. */
+.ai-input .ai-actions > button {
+  min-width: 48px;
+}
+.ai-references:empty {
+  display: none;
+}
+.ai-references > span {
+  background: var(--y-panel);
+  margin-bottom: 8px;
+  overflow-wrap: anywhere;
+}
+.ai-references > span button {
+  padding: 0;
+  min-height: 20px;
+}
+.ai-history-list {
+  padding: 12px;
+  border-bottom: 1px solid var(--y-border);
+}
+.ai-history-list article {
+  padding: 8px 0;
+  align-items: center;
+  gap: 4px;
+}
+.ai-history-list article > button:first-child {
+  display: block;
+  min-width: 0;
+  white-space: normal;
+}
+.ai-history-list > label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 10px 0;
+  font-size: 12px;
+  color: var(--y-muted);
+}
+.ai-fullscreen .ai-conversation {
+  width: min(100%, 800px);
+  align-self: center;
+}
+.ai-fullscreen .ai-input {
+  width: min(calc(100% - 32px), 768px);
+  align-self: center;
+}
+.ai-fullscreen .ai-model {
+  width: min(100%, 800px);
+  align-self: center;
+}
+.ai-fullscreen .ai-usage {
+  width: min(100%, 800px);
+  align-self: center;
+}
+.settings-panel {
+  width: min(860px, 94vw);
+  height: min(680px, 88vh);
+  border-radius: 10px;
+}
+.settings-panel h2 {
+  font-size: 17px;
+  letter-spacing: -0.02em;
+}
+.settings-body > nav {
+  width: 154px;
+  padding: 14px 10px;
+}
+.settings-body > nav button {
+  padding: 8px 12px;
+  font-size: 13px;
+}
+.settings-content {
+  padding: 18px 28px 28px;
+}
+.settings-content h3 {
+  margin: 4px 0 18px;
+  font-size: 19px;
+  letter-spacing: -0.02em;
+}
+.setting-row {
+  min-height: 48px;
+  border-bottom: 1px solid var(--y-border);
+  padding: 10px 0;
+}
+.setting-row > [data-slot="select-trigger"] {
+  width: 175px;
+  flex-shrink: 0;
+}
+.stacked > [data-slot="select-trigger"],
+.stacked > .model-picker {
+  width: 100%;
+  margin-top: 7px;
+}
+.ai-settings-tabs {
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-bottom: 18px;
+}
+.ai-settings-tabs button {
+  font-size: 12px;
+  padding: 5px 8px;
+}
+.settings-table {
+  font-size: 12px;
+}
+.settings-table th {
+  color: var(--y-muted);
+  font-weight: 500;
+  text-align: left;
+}
+.settings-table td,
+.settings-table th {
+  padding: 10px 8px;
+  overflow-wrap: anywhere;
+}
+.resource-dialog {
+  border-radius: 10px;
+  padding: 20px 24px;
+}
+.resource-dialog header {
+  margin-bottom: 18px;
+}
+.resource-dialog h2 {
+  margin: 0;
+  font-size: 17px;
+  letter-spacing: -0.02em;
+}
+.resource-dialog > label {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 16px;
+}
+.shortcut-help > header {
+  min-height: 40px;
+  padding: 8px 14px;
+}
+.shortcut-help-body {
+  padding: 14px;
+}
+.shortcut-help kbd,
+.palette-shortcut {
+  border: 1px solid var(--y-border);
+  background: var(--y-panel);
+  border-radius: 4px;
+  padding: 2px 5px;
+}
+.palette {
+  border-radius: 10px;
+  border: 1px solid var(--y-border);
+  box-shadow: var(--y-shadow-sm);
+}
+.palette-results > button {
+  border-radius: 4px;
+  padding: 9px 12px;
+}
+.inline-error {
+  color: var(--y-danger);
+  overflow-wrap: anywhere;
+}
+@container (max-width: 300px) {
+  .ai-model {
+    grid-template-columns: minmax(0, 1fr) 28px;
+  }
+  .ai-model > [data-slot="select-trigger"] {
+    grid-column: 1 / -1;
+  }
+  .ai-input .ai-actions small {
+    max-width: 130px;
+    line-height: 1.5;
+  }
+}
+@media (max-width: 700px) {
+  .settings-body > nav {
+    width: 112px;
+  }
+  .settings-content {
+    padding: 16px;
+  }
+  .setting-row {
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .ai-panel:not(.ai-fullscreen) {
+    max-width: 55vw;
+  }
 }

@@ -117,7 +117,7 @@ fn create_named(
         .hidden_title(true)
         // A new window does not inherit the config's traffic-light placement,
         // and the titlebar layout assumes this inset.
-        .traffic_light_position(tauri::LogicalPosition::new(20.0, 18.0));
+        .traffic_light_position(tauri::LogicalPosition::new(20.0, 12.0));
     let result = builder.build();
     if let Err(e) = result {
         app.state::<Windows>()

@@ -1,4 +1,17 @@
 <script setup lang="ts">
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import ModelPicker from "@/components/ModelPicker.vue";
+
 import { computed, onMounted, ref, watch, nextTick } from "vue";
 import { patchGroups, selectPatch } from "./partial";
 import { useAiStore, type Patch } from "../stores/ai";
@@ -40,6 +53,15 @@ const imageFiles = ref<
 const enabled = ref<Record<string, boolean>>({});
 const conversation = ref<HTMLElement>();
 const prompt = ref("");
+function startPrompt(text: string) {
+  prompt.value = text;
+  nextTick(() =>
+    conversation.value
+      ?.closest(".ai-panel")
+      ?.querySelector<HTMLTextAreaElement>("textarea")
+      ?.focus(),
+  );
+}
 const suggestions = computed(() => {
   const match = prompt.value.match(/(?:^|\s)([@/])([^\s]*)$/);
   if (!match) return [];
@@ -130,7 +152,8 @@ async function selectSuggestion(item: (typeof catalog.value)[number]) {
       if (!match) throw new Error("无法读取图片");
       // ai_send caps the base64 payload at 14M characters; failing here is
       // legible, failing there loses the conversation to an unsaveable record.
-      if (match[2].length > 14_000_000) throw new Error("图片过大（超过 10 MB）");
+      if (match[2].length > 14_000_000)
+        throw new Error("图片过大（超过 10 MB）");
       images.value.push({ type: "image", data: match[2], mimeType: match[1] });
       prompt.value = prompt.value.replace(/[@/][^\s]*$/, "");
       return;
@@ -171,16 +194,14 @@ async function fetchModels() {
     fetchingModels.value = false;
   }
 }
-async function selectProvider(event: Event) {
-  const select = event.target as HTMLSelectElement;
-  if (!select.value) {
+async function selectProvider(value: unknown) {
+  if (value === "__add") {
     ui.settingsCategory = "AI";
     ui.settingsOpen = true;
-    select.value = settings.value.ai.apiKeyRef;
     return;
   }
   const profile = settings.value.providerProfiles.find(
-    (p) => p.provider.apiKeyRef === select.value,
+    (p) => p.provider.apiKeyRef === value,
   );
   if (profile) {
     // Choosing a connection here is also the decision to use it.
@@ -230,6 +251,13 @@ watch(
 const include = ref(true);
 const reviewed = ref<number | null>(null);
 const included = ref<Record<number, number[]>>({});
+/** Hunk inclusion is a checkbox group over indices. */
+function toggleHunk(patchId: number, index: number) {
+  const list = (included.value[patchId] ??= []);
+  const at = list.indexOf(index);
+  if (at < 0) list.push(index);
+  else list.splice(at, 1);
+}
 function review(patch: Patch) {
   reviewed.value = reviewed.value === patch.id ? null : patch.id;
   included.value[patch.id] ??= patchGroups(
@@ -291,75 +319,80 @@ async function accept(patch: Patch) {
   <aside class="ai-panel" aria-label="AI 助手">
     <header>
       <strong>AI 助手</strong
-      ><button
+      ><Button
         title="新建会话"
+        aria-label="新建会话"
         @click="ai.reset().catch((e) => (ai.error = String(e)))"
       >
-        ＋</button
-      ><button
+        <UiIcon name="new" /></Button
+      ><Button
         title="会话列表"
         @click="
           historyOpen = !historyOpen;
           ai.refreshHistory();
         "
       >
-        会话</button
-      ><button title="工作空间 SKILL / MCP 资源" @click="resourcesOpen = true">
-        资源</button
-      ><button
+        会话</Button
+      ><Button title="工作空间 SKILL / MCP 资源" @click="resourcesOpen = true">
+        资源</Button
+      ><Button
         title="AI 全屏"
         aria-label="切换 AI 全屏"
         @click="ui.aiFullscreen = !ui.aiFullscreen"
       >
         <UiIcon name="fullscreen" />
-      </button>
+      </Button>
     </header>
     <div class="ai-model">
-      <select
-        aria-label="模型服务连接"
-        :value="settings.value.ai.apiKeyRef"
-        @change="selectProvider"
+      <Select
+        :model-value="settings.value.ai.apiKeyRef || undefined"
+        @update:model-value="
+          (value) => selectProvider(value).catch((e) => (ai.error = String(e)))
+        "
       >
-        <option :value="settings.value.ai.apiKeyRef">
-          {{
-            settings.value.providerProfiles.find(
-              (p) => p.provider.apiKeyRef === settings.value.ai.apiKeyRef,
-            )?.name || "当前连接"
-          }}
-        </option>
-        <option
-          v-for="profile in settings.value.providerProfiles.filter(
-            (p) => p.provider.apiKeyRef !== settings.value.ai.apiKeyRef,
-          )"
-          :key="profile.provider.apiKeyRef"
-          :value="profile.provider.apiKeyRef"
-        >
-          {{ profile.name }}
-        </option>
-        <option value="">＋ 新增连接…</option></select
-      ><input
+        <SelectTrigger aria-label="模型服务连接"
+          ><SelectValue placeholder="选择连接"
+        /></SelectTrigger>
+        <SelectContent>
+          <SelectItem
+            v-if="
+              settings.value.ai.apiKeyRef &&
+              !settings.value.providerProfiles.some(
+                (p) => p.provider.apiKeyRef === settings.value.ai.apiKeyRef,
+              )
+            "
+            :value="settings.value.ai.apiKeyRef"
+            >当前连接</SelectItem
+          >
+          <SelectItem
+            v-for="profile in settings.value.providerProfiles"
+            :key="profile.provider.apiKeyRef"
+            :value="profile.provider.apiKeyRef"
+            >{{ profile.name }}</SelectItem
+          >
+          <SelectItem value="__add">新增连接…</SelectItem>
+        </SelectContent>
+      </Select>
+      <ModelPicker
         v-model="settings.value.ai.model"
-        list="ai-model-list"
-        aria-label="AI 模型"
-        placeholder="模型 ID"
-        @change="syncModel"
-      /><datalist id="ai-model-list">
-        <option v-for="model in models" :key="model" :value="model" /></datalist
-      ><button
+        :models="models"
+        label="AI 模型"
+        @commit="syncModel().catch((e) => (ai.error = String(e)))"
+      /><Button
         :disabled="fetchingModels"
         @click="fetchModels"
         title="获取模型列表"
         aria-label="获取模型列表"
       >
         <UiIcon name="refresh" />
-      </button>
+      </Button>
     </div>
     <div v-if="historyOpen" class="ai-history-list">
-      <input v-model="historyQuery" placeholder="搜索会话" /><label
-        ><input v-model="allWorkspaces" type="checkbox" />所有工作空间</label
+      <Input v-model="historyQuery" placeholder="搜索会话" /><label
+        ><Checkbox v-model="allWorkspaces" />所有工作空间</label
       >
       <article v-for="item in histories" :key="item.id">
-        <button
+        <Button
           @click="
             ai
               .loadHistory(item.id)
@@ -368,28 +401,55 @@ async function accept(patch: Patch) {
           "
         >
           {{ item.title
-          }}<small>{{ item.workspace || "无工作空间" }}</small></button
-        ><button
+          }}<small>{{ item.workspace || "无工作空间" }}</small></Button
+        ><Button
           v-if="item.workspace !== (workspace.root ?? '')"
           @click="
             ai.loadHistory(item.id, true).then(() => (historyOpen = false))
           "
         >
-          派生到当前</button
-        ><button @click="ai.deleteHistory(item.id)">删除</button>
+          派生到当前</Button
+        ><Button @click="ai.deleteHistory(item.id)">删除</Button>
       </article>
       <p v-if="!histories.length" class="empty-hint">
         {{ historyQuery ? "没有匹配的会话" : "还没有历史会话" }}
       </p>
     </div>
-    <div ref="conversation" class="ai-conversation">
-      <p v-if="!ai.messages.length" class="empty-hint">
-        {{
-          settings.value.ai.enabled
-            ? "就当前文档提问，或描述希望修改的内容。"
-            : "请在偏好设置中启用 AI 并配置模型。"
-        }}<br />修改将先展示差异，由你决定是否应用。
-      </p>
+    <div
+      ref="conversation"
+      class="ai-conversation"
+      :class="{ 'is-empty': !ai.messages.length }"
+    >
+      <section v-if="!ai.messages.length" class="ai-welcome">
+        <h2>从这篇文档开始</h2>
+        <p>
+          {{
+            settings.value.ai.enabled
+              ? "梳理内容、调整表达，或一起推敲下一段。"
+              : "选择模型连接，开始讨论和修改文档。"
+          }}
+        </p>
+        <div class="ai-starters">
+          <Button
+            type="button"
+            @click="startPrompt('请总结当前文档的核心观点。')"
+            >梳理文档要点</Button
+          ><Button
+            type="button"
+            @click="startPrompt('请检查当前文档的结构，指出可以改进的地方。')"
+            >检查结构与表达</Button
+          ><Button
+            v-if="!settings.value.ai.enabled"
+            type="button"
+            @click="
+              ui.settingsCategory = 'AI';
+              ui.settingsOpen = true;
+            "
+            >配置模型连接</Button
+          >
+        </div>
+        <p class="ai-review-note">修改先展示差异，由你决定是否应用。</p>
+      </section>
       <article
         v-for="(message, index) in ai.messages"
         :key="index"
@@ -410,7 +470,7 @@ async function accept(patch: Patch) {
         />
       </article>
       <section v-for="patch in ai.patches" :key="patch.id" class="patch-card">
-        <button class="patch-title" @click="review(patch)">
+        <Button class="patch-title" @click="review(patch)">
           {{ patch.path.split(/[/\\]/).pop() || "未命名" }} ·
           {{
             patch.status === "pending"
@@ -419,7 +479,7 @@ async function accept(patch: Patch) {
                 ? "已接受"
                 : "已拒绝"
           }}
-        </button>
+        </Button>
         <p>{{ patch.reason }}</p>
         <div v-if="reviewed === patch.id" class="diff-view">
           <section
@@ -432,10 +492,10 @@ async function accept(patch: Patch) {
             <label
               v-if="group.changed && patch.status === 'pending'"
               class="hunk-choice"
-              ><input
-                v-model="included[patch.id]"
-                type="checkbox"
-                :value="index"
+              ><Checkbox
+                :model-value="(included[patch.id] ?? []).includes(index)"
+                aria-label="应用此处修改"
+                @update:model-value="toggleHunk(patch.id, index)"
               />应用此处修改</label
             >
             <pre v-if="group.before" :class="{ removed: group.changed }">{{
@@ -447,20 +507,21 @@ async function accept(patch: Patch) {
           </section>
         </div>
         <div v-if="patch.status === 'pending'" class="patch-actions">
-          <button @click="patch.status = 'rejected'">拒绝</button
-          ><button
+          <Button @click="patch.status = 'rejected'">拒绝</Button
+          ><Button
             class="primary"
             :disabled="reviewed !== patch.id || !included[patch.id]?.length"
             @click="accept(patch)"
           >
             接受修改
-          </button>
+          </Button>
         </div>
       </section>
       <p v-if="ai.tool" class="empty-hint">正在使用 {{ ai.tool }}…</p>
       <p v-if="ai.error" class="inline-error" role="alert">{{ ai.error }}</p>
     </div>
     <div
+      v-if="ai.busy || ai.inputTokens || ai.outputTokens"
       class="ai-usage"
       :title="
         ai.busy
@@ -468,7 +529,7 @@ async function accept(patch: Patch) {
           : '服务端报告的 token 用量'
       "
     >
-      上下文 {{ ai.inputTokens.toLocaleString() }} / 128,000 · 输出
+      输入 {{ ai.inputTokens.toLocaleString() }} · 输出
       {{ ai.outputTokens }} tokens · {{ ai.busy ? "≈" : ""
       }}{{ ai.tokensPerSecond.toFixed(1) }} tokens/s
     </div>
@@ -479,58 +540,56 @@ async function accept(patch: Patch) {
           :key="reference.id"
           :title="reference.label"
           ><UiIcon name="chatgpt" />{{ reference.label
-          }}<button
+          }}<Button
             type="button"
             aria-label="移除引用"
             @click="
               ai.references = ai.references.filter((r) => r.id !== reference.id)
             "
           >
-            <UiIcon name="close" />
-          </button></span
+            <UiIcon name="close" /> </Button></span
         ><span v-for="(image, i) in images" :key="i"
           ><img
             :src="`data:${image.mimeType};base64,${image.data}`"
-            alt="待发送图片"
-          /><button
+            alt="待发送图片" /><Button
             type="button"
             aria-label="移除图片"
             @click="images.splice(i, 1)"
           >
-            <UiIcon name="close" /></button></span
-        >
+            <UiIcon name="close" /></Button
+        ></span>
       </div>
       <div v-if="suggestions.length" class="ai-suggestions">
-        <button
+        <Button
           v-for="item in suggestions"
           :key="item.id"
           type="button"
           @click="selectSuggestion(item)"
         >
           {{ item.name }}<small>{{ item.kind }}</small>
-        </button>
+        </Button>
       </div>
-      <div class="ai-composer-options">
-        <label><input v-model="include" type="checkbox" />当前文档</label
-        ><label><input v-model="ai.thinking" type="checkbox" />思考</label>
-      </div>
-      <textarea
+      <Textarea
         v-model="prompt"
-        placeholder="输入消息 · @ 引用文件或图片 · / 选择资源"
+        placeholder="描述你的问题或修改想法…"
         aria-label="AI 消息"
         @keydown.enter.exact="enter($event)"
       />
       <div class="ai-actions">
-        <small>Enter 发送 · Shift Enter 换行</small
-        ><button
+        <div class="ai-composer-options">
+          <label><Checkbox v-model="include" />当前文档</label
+          ><label><Checkbox v-model="ai.thinking" />思考</label>
+        </div>
+        <small>@ 引用 · / 资源</small
+        ><Button
           v-if="ai.busy"
           type="button"
           @click="ai.abort().catch((e) => (ai.error = String(e)))"
         >
-          停止</button
-        ><button v-else class="primary" :disabled="ai.busy || !prompt.trim()">
+          停止</Button
+        ><Button v-else class="primary" :disabled="ai.busy || !prompt.trim()">
           发送
-        </button>
+        </Button>
       </div>
     </form>
     <ResourceDialog

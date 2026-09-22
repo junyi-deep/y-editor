@@ -8,5 +8,5 @@ export default defineConfig({
     alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) },
   },
   plugins: [vue()],
-  test: { environment: 'jsdom', include: ['tests/**/*.test.ts'], restoreMocks: true },
+  test: { setupFiles: ['tests/ui-setup.ts'], environment: 'jsdom', include: ['tests/**/*.test.ts'], restoreMocks: true },
 });

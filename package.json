@@ -15,7 +15,8 @@
     "sidecars": "node scripts/fetch-sidecars.mjs",
     "test:ai": "node --test scripts/test-pi.mjs",
     "package:portable": "node scripts/package-portable.mjs",
-    "format": "prettier --write \"src/**/*.{ts,vue,css}\" \"tests/**/*.ts\" \"scripts/*.mjs\" \"resources/**/*.mjs\""
+    "format": "prettier --write \"src/**/*.{ts,vue,css}\" \"tests/**/*.ts\" \"scripts/*.mjs\" \"resources/**/*.mjs\"",
+    "ui:check": "node scripts/ui-check.mjs"
   },
   "dependencies": {
     "@codemirror/autocomplete": "6.20.3",
@@ -25,8 +26,8 @@
     "@codemirror/language-data": "6.5.2",
     "@codemirror/state": "6.7.5",
     "@codemirror/view": "6.43.12",
-    "@lucide/vue": "1.47.0",
     "@milkdown/kit": "7.22.1",
+    "@phosphor-icons/vue": "^2.2.1",
     "@tailwindcss/vite": "4.3.3",
     "@tauri-apps/api": "2.11.1",
     "@vueuse/core": "^15.0.0",
