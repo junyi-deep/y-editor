@@ -235,10 +235,12 @@ describe("Milkdown real editor integration", () => {
   });
   it("highlights mermaid source in the diagram editor", async () => {
     const { host } = await open("```mermaid\nflowchart LR\n A-->B\n```");
-    await vi.waitFor(() =>
-      expect(
-        host.querySelectorAll(".code-editor .cm-line span").length,
-      ).toBeGreaterThan(0),
+    await vi.waitFor(
+      () =>
+        expect(
+          host.querySelectorAll(".code-editor .cm-line span").length,
+        ).toBeGreaterThan(0),
+      10_000,
     );
   });
   it("blocks programmatic editing in read-only mode", async () => {

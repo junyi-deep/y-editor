@@ -14,5 +14,11 @@ export default defineConfig({
     environment: "jsdom",
     include: ["tests/**/*.test.ts"],
     restoreMocks: true,
+    // Use child processes instead of worker threads to avoid the
+    // "Timeout calling onTaskUpdate" RPC errors on Windows CI.
+    pool: "forks",
+    // Heavy jsdom + CodeMirror tests need a generous timeout,
+    // especially on Windows CI runners.
+    testTimeout: 30_000,
   },
 });
