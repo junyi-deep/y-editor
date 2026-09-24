@@ -1,5 +1,11 @@
 <script setup lang="ts">
-import { Input } from "@/components/ui/input";
+import AiHistoryDialog from "./AiHistoryDialog.vue";
+import { approvalModes } from "./approval";
+import {
+  Popover,
+  PopoverAnchor,
+  PopoverContent,
+} from "@/components/ui/popover";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
@@ -18,7 +24,6 @@ import { useAiStore, type Patch } from "../stores/ai";
 import { useDocumentStore } from "../stores/document";
 import { useSettingsStore } from "../stores/settings";
 import { useEditorStore } from "../stores/editor";
-import { mergePatch } from "./merge";
 import { call } from "../services/backend";
 import StreamMarkdown from "./StreamMarkdown.vue";
 import ResourceDialog from "./ResourceDialog.vue";
@@ -31,16 +36,7 @@ const settings = useSettingsStore();
 const ui = useEditorStore();
 const workspace = useWorkspaceStore();
 const historyOpen = ref(false),
-  historyQuery = ref(""),
-  allWorkspaces = ref(false),
   resourcesOpen = ref(false);
-const histories = computed(() =>
-  ai.history.filter(
-    (h) =>
-      (allWorkspaces.value || h.workspace === (workspace.root ?? "")) &&
-      h.title.toLowerCase().includes(historyQuery.value.toLowerCase()),
-  ),
-);
 const models = ref<string[]>([]),
   fetchingModels = ref(false);
 const images = ref<{ type: "image"; data: string; mimeType: string }[]>([]);
@@ -53,6 +49,61 @@ const imageFiles = ref<
 const enabled = ref<Record<string, boolean>>({});
 const conversation = ref<HTMLElement>();
 const prompt = ref("");
+const composer = ref<HTMLElement>();
+const suggestionIndex = ref(0);
+const suggestionsDismissed = ref(false);
+const composerFocused = ref(false);
+const suggestionOpen = computed(
+  () =>
+    composerFocused.value &&
+    !suggestionsDismissed.value &&
+    suggestions.value.length > 0,
+);
+watch(prompt, () => {
+  suggestionIndex.value = 0;
+  suggestionsDismissed.value = false;
+});
+function focusComposer() {
+  composer.value?.querySelector("textarea")?.focus();
+}
+function composerKey(event: KeyboardEvent) {
+  if (event.isComposing) return;
+  if (
+    suggestionOpen.value &&
+    !(
+      event.key === "Enter" &&
+      (event.shiftKey || event.ctrlKey || event.metaKey || event.altKey)
+    ) &&
+    ["ArrowDown", "ArrowUp", "Enter", "Escape"].includes(event.key)
+  ) {
+    event.preventDefault();
+    event.stopPropagation();
+    if (event.key === "Escape") suggestionsDismissed.value = true;
+    else if (event.key === "Enter")
+      void selectSuggestion(suggestions.value[suggestionIndex.value]);
+    else {
+      suggestionIndex.value =
+        (suggestionIndex.value +
+          (event.key === "ArrowDown" ? 1 : -1) +
+          suggestions.value.length) %
+        suggestions.value.length;
+      nextTick(() =>
+        document
+          .getElementById(`ai-suggestion-${suggestionIndex.value}`)
+          ?.scrollIntoView({ block: "nearest" }),
+      );
+    }
+    return;
+  }
+  if (
+    event.key === "Enter" &&
+    !event.shiftKey &&
+    !event.ctrlKey &&
+    !event.metaKey &&
+    !event.altKey
+  )
+    enter(event);
+}
 function startPrompt(text: string) {
   prompt.value = text;
   nextTick(() =>
@@ -95,6 +146,16 @@ const suggestions = computed(() => {
     .slice(0, 12);
 });
 const IMAGE = /\.(png|jpe?g|webp|gif)$/i;
+const resourceLabels: Record<string, string> = {
+  builtin: "命令",
+  file: "文件",
+  image: "图片",
+  knowledge: "知识库",
+  repository: "仓库",
+  skill: "SKILL",
+  mcp: "MCP",
+  prompt: "提示词",
+};
 const isImage = (name: string) => IMAGE.test(name);
 /**
  * Images are referenceable through @ instead of an upload control. Listed
@@ -138,6 +199,8 @@ async function refreshCatalog() {
   }
 }
 async function selectSuggestion(item: (typeof catalog.value)[number]) {
+  if (!item) return;
+  suggestionsDismissed.value = true;
   try {
     if (item.kind === "image") {
       if (!item.path) throw new Error("无法读取图片");
@@ -179,6 +242,11 @@ async function selectSuggestion(item: (typeof catalog.value)[number]) {
     prompt.value = prompt.value.replace(/[@/][^\s]*$/, "");
   } catch (e) {
     ai.error = String(e);
+  } finally {
+    nextTick(() => {
+      focusComposer();
+      suggestionsDismissed.value = true;
+    });
   }
 }
 async function fetchModels() {
@@ -249,7 +317,7 @@ watch(
 );
 
 const include = ref(true);
-const reviewed = ref<number | null>(null);
+const collapsed = ref<number[]>([]);
 const included = ref<Record<number, number[]>>({});
 /** Hunk inclusion is a checkbox group over indices. */
 function toggleHunk(patchId: number, index: number) {
@@ -259,12 +327,21 @@ function toggleHunk(patchId: number, index: number) {
   else list.splice(at, 1);
 }
 function review(patch: Patch) {
-  reviewed.value = reviewed.value === patch.id ? null : patch.id;
-  included.value[patch.id] ??= patchGroups(
-    patch.original,
-    patch.proposed,
-  ).flatMap((g, i) => (g.changed ? [i] : []));
+  collapsed.value = collapsed.value.includes(patch.id)
+    ? collapsed.value.filter((id) => id !== patch.id)
+    : [...collapsed.value, patch.id];
 }
+watch(
+  () => ai.patches.map((p) => p.id),
+  () => {
+    for (const patch of ai.patches)
+      included.value[patch.id] ??= patchGroups(
+        patch.original,
+        patch.proposed,
+      ).flatMap((g, i) => (g.changed ? [i] : []));
+  },
+  { immediate: true, flush: "sync" },
+);
 onMounted(() => {
   void ai.refreshHistory().catch((e) => (ai.error = String(e)));
   void refreshCatalog();
@@ -291,28 +368,12 @@ async function send() {
   }
 }
 async function accept(patch: Patch) {
-  try {
-    const proposed = selectPatch(
-      patch.original,
-      patch.proposed,
-      included.value[patch.id] ?? [],
-    );
-    if (patch.path === (doc.path ?? "") || (!patch.path && !doc.path)) {
-      const merged = mergePatch(patch.original, doc.content, proposed);
-      if (merged === null)
-        throw new Error("文档已变化，修改范围发生冲突，请重新生成提案。");
-      doc.update(merged);
-    } else {
-      await call("apply_file_patch", {
-        path: patch.path,
-        original: patch.original,
-        proposed,
-      });
-    }
-    patch.status = "accepted";
-  } catch (error) {
-    ai.error = String(error);
-  }
+  const indices = included.value[patch.id] ?? [];
+  if (!indices.length) return;
+  await ai.applyPatch(
+    patch,
+    selectPatch(patch.original, patch.proposed, indices),
+  );
 }
 </script>
 <template>
@@ -387,34 +448,6 @@ async function accept(patch: Patch) {
         <UiIcon name="refresh" />
       </Button>
     </div>
-    <div v-if="historyOpen" class="ai-history-list">
-      <Input v-model="historyQuery" placeholder="搜索会话" /><label
-        ><Checkbox v-model="allWorkspaces" />所有工作空间</label
-      >
-      <article v-for="item in histories" :key="item.id">
-        <Button
-          @click="
-            ai
-              .loadHistory(item.id)
-              .then(() => (historyOpen = false))
-              .catch((e) => (ai.error = String(e)))
-          "
-        >
-          {{ item.title
-          }}<small>{{ item.workspace || "无工作空间" }}</small></Button
-        ><Button
-          v-if="item.workspace !== (workspace.root ?? '')"
-          @click="
-            ai.loadHistory(item.id, true).then(() => (historyOpen = false))
-          "
-        >
-          派生到当前</Button
-        ><Button @click="ai.deleteHistory(item.id)">删除</Button>
-      </article>
-      <p v-if="!histories.length" class="empty-hint">
-        {{ historyQuery ? "没有匹配的会话" : "还没有历史会话" }}
-      </p>
-    </div>
     <div
       ref="conversation"
       class="ai-conversation"
@@ -481,7 +514,7 @@ async function accept(patch: Patch) {
           }}
         </Button>
         <p>{{ patch.reason }}</p>
-        <div v-if="reviewed === patch.id" class="diff-view">
+        <div v-if="!collapsed.includes(patch.id)" class="diff-view">
           <section
             v-for="(group, index) in patchGroups(
               patch.original,
@@ -510,10 +543,12 @@ async function accept(patch: Patch) {
           <Button @click="patch.status = 'rejected'">拒绝</Button
           ><Button
             class="primary"
-            :disabled="reviewed !== patch.id || !included[patch.id]?.length"
+            :disabled="
+              !included[patch.id]?.length || ai.applying.includes(patch.id)
+            "
             @click="accept(patch)"
           >
-            接受修改
+            {{ ai.applying.includes(patch.id) ? "正在应用…" : "接受修改" }}
           </Button>
         </div>
       </section>
@@ -533,65 +568,137 @@ async function accept(patch: Patch) {
       {{ ai.outputTokens }} tokens · {{ ai.busy ? "≈" : ""
       }}{{ ai.tokensPerSecond.toFixed(1) }} tokens/s
     </div>
-    <form class="ai-input" @submit.prevent="send">
-      <div class="ai-references">
-        <span
-          v-for="reference in ai.references"
-          :key="reference.id"
-          :title="reference.label"
-          ><UiIcon name="chatgpt" />{{ reference.label
-          }}<Button
-            type="button"
-            aria-label="移除引用"
-            @click="
-              ai.references = ai.references.filter((r) => r.id !== reference.id)
+    <Popover
+      :open="suggestionOpen"
+      :modal="false"
+      @update:open="
+        (open) => {
+          if (!open) suggestionsDismissed = true;
+        }
+      "
+    >
+      <PopoverAnchor as-child>
+        <form ref="composer" class="ai-input" @submit.prevent="send">
+          <div class="ai-references">
+            <span
+              v-for="reference in ai.references"
+              :key="reference.id"
+              :title="reference.label"
+              ><UiIcon name="chatgpt" />{{ reference.label
+              }}<Button
+                type="button"
+                aria-label="移除引用"
+                @click="
+                  ai.references = ai.references.filter(
+                    (r) => r.id !== reference.id,
+                  )
+                "
+              >
+                <UiIcon name="close" /> </Button></span
+            ><span v-for="(image, i) in images" :key="i"
+              ><img
+                :src="`data:${image.mimeType};base64,${image.data}`"
+                alt="待发送图片" /><Button
+                type="button"
+                aria-label="移除图片"
+                @click="images.splice(i, 1)"
+              >
+                <UiIcon name="close" /></Button
+            ></span>
+          </div>
+          <Textarea
+            v-model="prompt"
+            placeholder="描述你的问题或修改想法…"
+            aria-label="AI 消息"
+            :aria-expanded="suggestionOpen"
+            aria-controls="ai-suggestions"
+            :aria-activedescendant="
+              suggestionOpen ? `ai-suggestion-${suggestionIndex}` : undefined
             "
-          >
-            <UiIcon name="close" /> </Button></span
-        ><span v-for="(image, i) in images" :key="i"
-          ><img
-            :src="`data:${image.mimeType};base64,${image.data}`"
-            alt="待发送图片" /><Button
+            @keydown="composerKey"
+            @focus="composerFocused = true"
+            @blur="composerFocused = false"
+          />
+          <div class="ai-actions">
+            <div class="ai-composer-options">
+              <label><Checkbox v-model="include" />当前文档</label
+              ><label><Checkbox v-model="ai.thinking" />思考</label>
+            </div>
+            <small>@ 引用 · / 资源</small
+            ><Button
+              v-if="ai.busy"
+              type="button"
+              @click="ai.abort().catch((e) => (ai.error = String(e)))"
+            >
+              停止</Button
+            ><Button
+              v-else
+              class="primary"
+              :disabled="ai.busy || !prompt.trim()"
+            >
+              发送
+            </Button>
+          </div>
+        </form>
+      </PopoverAnchor>
+      <PopoverContent
+        side="top"
+        align="start"
+        :side-offset="8"
+        :avoid-collisions="false"
+        class="ai-suggestions"
+        @open-auto-focus.prevent
+        @close-auto-focus.prevent
+        @focus-outside.prevent
+      >
+        <div id="ai-suggestions" role="listbox" aria-label="引用与命令">
+          <Button
+            v-for="(item, index) in suggestions"
+            :id="`ai-suggestion-${index}`"
+            :key="item.id"
             type="button"
-            aria-label="移除图片"
-            @click="images.splice(i, 1)"
+            role="option"
+            :aria-selected="index === suggestionIndex"
+            :class="{ active: index === suggestionIndex }"
+            @mousedown.prevent
+            @click="selectSuggestion(item)"
           >
-            <UiIcon name="close" /></Button
-        ></span>
-      </div>
-      <div v-if="suggestions.length" class="ai-suggestions">
-        <Button
-          v-for="item in suggestions"
-          :key="item.id"
-          type="button"
-          @click="selectSuggestion(item)"
-        >
-          {{ item.name }}<small>{{ item.kind }}</small>
-        </Button>
-      </div>
-      <Textarea
-        v-model="prompt"
-        placeholder="描述你的问题或修改想法…"
-        aria-label="AI 消息"
-        @keydown.enter.exact="enter($event)"
-      />
-      <div class="ai-actions">
-        <div class="ai-composer-options">
-          <label><Checkbox v-model="include" />当前文档</label
-          ><label><Checkbox v-model="ai.thinking" />思考</label>
+            <span>{{ item.name }}</span
+            ><small>{{ resourceLabels[item.kind] ?? item.kind }}</small>
+          </Button>
         </div>
-        <small>@ 引用 · / 资源</small
-        ><Button
-          v-if="ai.busy"
-          type="button"
-          @click="ai.abort().catch((e) => (ai.error = String(e)))"
+      </PopoverContent>
+    </Popover>
+    <div class="ai-composer-footer">
+      <Select
+        v-model="ai.approvalMode"
+        :disabled="ai.busy || ai.applying.length > 0"
+      >
+        <SelectTrigger
+          aria-label="审批模式"
+          :title="
+            approvalModes.find((mode) => mode.value === ai.approvalMode)
+              ?.description
+          "
+          ><SelectValue>{{
+            approvalModes.find((mode) => mode.value === ai.approvalMode)?.label
+          }}</SelectValue></SelectTrigger
         >
-          停止</Button
-        ><Button v-else class="primary" :disabled="ai.busy || !prompt.trim()">
-          发送
-        </Button>
-      </div>
-    </form>
+        <SelectContent side="top" align="start">
+          <SelectItem
+            v-for="mode in approvalModes"
+            :key="mode.value"
+            :value="mode.value"
+            ><span class="approval-option"
+              ><strong>{{ mode.label }}</strong
+              ><small>{{ mode.description }}</small></span
+            ></SelectItem
+          >
+        </SelectContent>
+      </Select>
+      <span>Shift Enter 换行</span>
+    </div>
+    <AiHistoryDialog v-if="historyOpen" @close="historyOpen = false" />
     <ResourceDialog
       v-if="resourcesOpen"
       @close="

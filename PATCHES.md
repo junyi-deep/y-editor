@@ -48,3 +48,15 @@ Run frontend and Rust checks on upgrade; verify browser and bundled offline beha
 - All remaining native `<input type="checkbox">` replaced by the owned `Checkbox` (find bar, resources panel, resource dialog, command palette, AI panel history and diff hunks). Two of them are index-array groups; the owned checkbox is boolean, so they keep the array through an explicit toggle rather than `v-model`. `tests/ui-controls.test.ts` now bans `type="checkbox"` in `src/` so the rule is testable.
 - `shortcutLabel()` in `command-palette/registry.ts` renders stored combos as ⌘⇧N for the menus and the palette; the stored `Mod+Shift+n` spelling is unchanged. The palette no longer puts a command's category in the key chip.
 - Test-only: `scripts/ui-check.mjs` needs Chrome and a running dev server, so it is `pnpm ui:check`, not part of `pnpm test` — the same opt-in shape as `scripts/test-provider-live.mjs`.
+
+## 2026-09-23 — AI review and editor interaction follow-up
+
+- Copied shadcn-vue `ui/dialog/*` and `ui/popover/*` with the CLI. DialogContent/ScrollContent use Phosphor Bold X, Chinese close labels, token foreground/backdrop and `--y-z-modal`; removed stock animation/heavy shadows. DialogContent close tooltip names Esc. PopoverContent uses `--y-z-popover`, no stock animations or shadows. Other copied wrappers remain upstream source with formatting only.
+- `ui/button/Button.vue`: optional command/shortcut props resolve effective command overrides through the injected registry; explicit attribute forwarding retains the composed tooltip. Unassigned actions report no assigned shortcut, without inventing bindings.
+- `milkdown.ts` / `source-location.ts`: optional precise source range through detached serialization; context action bookmarks preserve the actual ProseMirror selection.
+- `milkdown-tables.ts` / `interactions.ts` / `tables.ts`: seven table actions, whole-table deletion transaction, right-click selection preservation, row/column drag destination feedback and reduced-motion-aware FLIP feedback. Body-side overlays never enter Markdown serialization.
+- `mermaid.ts`: size inline vector geometry on zoom, translate only for panning, dispose ResizeObservers with previews/dialogs; Esc completes immersive editing. No bitmap or composited CSS scale used for preview zoom.
+
+Upgrade checks: frontend suite, lint/typecheck/build, Rust fmt/clippy/tests; browser composer geometry, menu outside dismissal, dialog Escape, dark/light settings and table/diagram rendering.
+
+- Finish review: composer modified-Enter handling preserves newlines; editor context-menu hints receive the live command-registry lookup through an adapter hook, with native clipboard combinations rendered per platform.

@@ -1,3 +1,6 @@
+import { mergePatch } from "../ai/merge";
+import { autoApprove, type ApprovalMode } from "../ai/approval";
+import { useDocumentStore } from "./document";
 import { defineStore } from "pinia";
 import { ref, watch } from "vue";
 import type { UnlistenFn } from "@tauri-apps/api/event";
@@ -55,6 +58,57 @@ export const useAiStore = defineStore("ai", () => {
   >([]);
   const references = ref<{ id: string; label: string; text: string }[]>([]);
   const thinking = ref(false);
+  // Deliberately session-scoped: opening a different conversation never inherits
+  // automatic write approval from the previous one.
+  const approvalMode = ref<ApprovalMode>("request");
+  const applying = ref<number[]>([]);
+  let approvals = Promise.resolve();
+  async function applyPatch(patch: Patch, proposed = patch.proposed) {
+    if (patch.status !== "pending" || applying.value.includes(patch.id)) return;
+    applying.value.push(patch.id);
+    try {
+      const doc = useDocumentStore();
+      if (patch.path === (doc.path ?? "")) {
+        const merged = mergePatch(patch.original, doc.content, proposed);
+        if (merged === null)
+          throw new Error("文档已变化，修改范围发生冲突，请重新生成提案。");
+        doc.update(merged);
+      } else {
+        await call("apply_file_patch", {
+          path: patch.path,
+          original: patch.original,
+          proposed,
+        });
+      }
+      patch.status = "accepted";
+    } catch (cause) {
+      error.value = String(cause);
+    } finally {
+      applying.value = applying.value.filter((id) => id !== patch.id);
+    }
+  }
+  function receivePatch(data: Omit<Patch, "id" | "status">) {
+    const patch = { ...data, id: ++patchId, status: "pending" as const };
+    patches.value.push(patch);
+    const stored = patches.value[patches.value.length - 1];
+    const mode = approvalMode.value;
+    const documentPath = useDocumentStore().path;
+    const identity = conversationId.value;
+    const workspaceRoot = useWorkspaceStore().root;
+    if (autoApprove(mode, stored.path, documentPath)) {
+      approvals = approvals.then(async () => {
+        // A conversation/workspace switch or a stricter mode cancels queued work.
+        if (
+          identity !== conversationId.value ||
+          workspaceRoot !== useWorkspaceStore().root ||
+          approvalMode.value !== mode ||
+          useDocumentStore().path !== documentPath
+        )
+          return;
+        await applyPatch(stored);
+      });
+    }
+  }
   const inputTokens = ref(0),
     outputTokens = ref(0),
     tokensPerSecond = ref(0);
@@ -163,11 +217,7 @@ export const useAiStore = defineStore("ai", () => {
             typeof patch.original === "string" &&
             typeof patch.proposed === "string"
           )
-            patches.value.push({
-              ...patch,
-              id: ++patchId,
-              status: "pending",
-            });
+            receivePatch(patch);
         }
         if (
           event.type === "message_end" &&
@@ -248,6 +298,8 @@ export const useAiStore = defineStore("ai", () => {
     await call("ai_abort");
   }
   async function reset() {
+    approvalMode.value = "request";
+    await approvals;
     await persist();
     if (desktop) await call("ai_stop");
     session.value = null;
@@ -278,6 +330,8 @@ export const useAiStore = defineStore("ai", () => {
     if (desktop) history.value = await call("ai_history_list");
   }
   async function loadHistory(id: string, fork = false) {
+    approvalMode.value = "request";
+    await approvals;
     await persist();
     await call("ai_stop");
     session.value = null;
@@ -322,12 +376,17 @@ export const useAiStore = defineStore("ai", () => {
     { deep: true },
   );
   function dispose() {
+    approvalMode.value = "request";
     clearTimeout(persistTimer);
     void persist().catch(() => {});
     unlisten?.();
     unlisten = undefined;
   }
   return {
+    approvalMode,
+    applying,
+    applyPatch,
+    receivePatch,
     references,
     thinking,
     inputTokens,

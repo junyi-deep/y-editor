@@ -5,7 +5,9 @@ import {
   type TableAction,
 } from "./tables";
 interface Hooks {
+  shortcut?: (action: string) => string;
   restore?: () => void;
+  remember?: () => void;
   selectAll?: () => void;
   table?: (
     action: TableAction,
@@ -33,6 +35,7 @@ export function createEditorInteractions(host: HTMLElement, hooks: Hooks) {
     return el?.closest<HTMLTableCellElement>("td,th") ?? null;
   }
   function remember() {
+    hooks.remember?.();
     const selection = window.getSelection();
     if (selection?.rangeCount && host.contains(selection.anchorNode))
       saved = selection.getRangeAt(0).cloneRange();
@@ -62,7 +65,15 @@ export function createEditorInteractions(host: HTMLElement, hooks: Hooks) {
     const b = document.createElement("button");
     b.type = "button";
     b.textContent = label;
-    b.title = label;
+    const commands: Record<string, string> = {
+      撤销: "undo",
+      重做: "redo",
+      剪切: "cut",
+      复制: "copy",
+      粘贴: "paste",
+      全选: "selectAll",
+    };
+    b.title = `${label} · ${hooks.shortcut?.(commands[label] ?? "") || "未设置快捷键"}`;
     b.onmousedown = (e) => e.preventDefault();
     b.onclick = () => {
       restore();
@@ -336,14 +347,7 @@ export function createEditorInteractions(host: HTMLElement, hooks: Hooks) {
         ["内容右对齐", "right"],
       ] as const)
         button(tableMenu, label, () => tableAction(action));
-      const table = cell.closest("table")!;
-      const allSelected =
-        saved &&
-        !saved.collapsed &&
-        Array.from(table.querySelectorAll("th,td")).every((c) =>
-          saved!.intersectsNode(c),
-        );
-      if (!allSelected) {
+      if (cell) {
         button(tableMenu, "删除行", () => tableAction("deleteRow"));
         button(tableMenu, "删除列", () => tableAction("deleteColumn"));
         const rows = submenu(tableMenu, "插入行");
@@ -353,6 +357,7 @@ export function createEditorInteractions(host: HTMLElement, hooks: Hooks) {
         button(columns, "前方插入", () => tableAction("addColumnBefore"));
         button(columns, "后方插入", () => tableAction("addColumn"));
       }
+      button(tableMenu, "删除表格", () => tableAction("deleteTable"));
       button(tableMenu, "复制表格", () => {
         const table = cell?.closest("table");
         if (!table) return;
@@ -417,13 +422,105 @@ export function createEditorInteractions(host: HTMLElement, hooks: Hooks) {
     theme(menu);
     document.body.append(menu);
   }
+  const toolbar = document.createElement("div");
+  toolbar.className = "table-actions";
+  toolbar.setAttribute("role", "toolbar");
+  toolbar.setAttribute("aria-label", "表格操作");
+  toolbar.hidden = true;
+  const icons = {
+    deleteTable: "M4 4h16v16H4z M4 10h16 M10 4v16 M14 14l4 4m0-4-4 4",
+    addRowBefore: "M4 11h16v9H4z M4 15h16 M12 2v6 M9 5h6",
+    addRow: "M4 4h16v9H4z M4 8h16 M12 16v6 M9 19h6",
+    addColumnBefore: "M11 4h9v16h-9z M15 4v16 M2 12h6 M5 9v6",
+    addColumn: "M4 4h9v16H4z M8 4v16 M16 12h6 M19 9v6",
+    deleteRow: "M4 4h16v16H4z M4 10h16 M4 14h16 M9 12h6",
+    deleteColumn: "M4 4h16v16H4z M10 4v16 M14 4v16 M12 9v6",
+  };
+  for (const [action, label] of [
+    ["deleteTable", "删除表格"],
+    ["addRowBefore", "上方插入行"],
+    ["addRow", "下方插入行"],
+    ["addColumnBefore", "左侧插入列"],
+    ["addColumn", "右侧插入列"],
+    ["deleteRow", "删除行"],
+    ["deleteColumn", "删除列"],
+  ] as const) {
+    const control = button(toolbar, label, () => {
+      tableAction(action);
+      refresh();
+    });
+    control.setAttribute("aria-label", label);
+    control.innerHTML = `<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${icons[action]}"/></svg>`;
+    if (action === "addRow") control.title = label + " · Shift+Enter";
+    if (action === "addColumn") control.title = label + " · Ctrl/⌘+Enter";
+  }
+  theme(toolbar);
+  document.body.append(toolbar);
+  function positionToolbar() {
+    if (!cell?.isConnected || host.dataset.readonly === "true") {
+      toolbar.hidden = true;
+      return;
+    }
+    const rect = cell.closest("table")!.getBoundingClientRect();
+    const bounds = host.getBoundingClientRect();
+    toolbar.hidden = rect.bottom < bounds.top || rect.top > bounds.bottom;
+    toolbar.style.left = `${Math.max(8, Math.min(rect.left, window.innerWidth - 235))}px`;
+    toolbar.style.top = `${Math.max(bounds.top, rect.top - 34)}px`;
+  }
   function refresh() {
     if (dialog || menu) return;
     cell = selectedCell();
     remember();
+    positionToolbar();
+  }
+  function tableClick(event: MouseEvent) {
+    const target = (event.target as Element).closest<HTMLTableCellElement>(
+      "td,th",
+    );
+    if (target) {
+      cell = target;
+      remember();
+      positionToolbar();
+    }
   }
   let drag: { cell: HTMLTableCellElement; axis: "row" | "column" } | null =
     null;
+  const hint = document.createElement("div");
+  hint.className = "table-drag-hint";
+  function clearDrag() {
+    host
+      .querySelectorAll(".table-drag-source,.table-drop-target")
+      .forEach((el) =>
+        el.classList.remove("table-drag-source", "table-drop-target"),
+      );
+    hint.remove();
+    drag = null;
+  }
+  function dragMove(event: PointerEvent) {
+    if (!drag) return;
+    const target = (event.target as Element).closest<HTMLTableCellElement>(
+      "th,td",
+    );
+    if (!target || target.closest("table") !== drag.cell.closest("table"))
+      return;
+    const table = target.closest("table")!;
+    const index = (c: HTMLTableCellElement) =>
+      drag!.axis === "column"
+        ? c.cellIndex
+        : (c.parentElement as HTMLTableRowElement).rowIndex;
+    table.querySelectorAll<HTMLTableCellElement>("th,td").forEach((c) => {
+      c.classList.toggle("table-drag-source", index(c) === index(drag!.cell));
+      c.classList.toggle(
+        "table-drop-target",
+        index(c) === index(target) && index(c) !== index(drag!.cell),
+      );
+    });
+    hint.textContent = `移动第 ${index(drag.cell) + 1} ${drag.axis === "row" ? "行" : "列"} → ${index(target) + 1}`;
+    hint.style.left = `${event.clientX + 12}px`;
+    hint.style.top = `${event.clientY + 12}px`;
+    theme(hint);
+    document.body.append(hint);
+  }
   function drop(event: PointerEvent) {
     if (!drag) return;
     event.preventDefault();
@@ -431,14 +528,64 @@ export function createEditorInteractions(host: HTMLElement, hooks: Hooks) {
     const target = (event.target as Element).closest<HTMLTableCellElement>(
       "th,td",
     );
-    if (target && host.contains(target) && hooks.reorder) hooks.reorder(drag.cell, target, drag.axis);
-    else if (target && reorderTable(drag.cell, target, drag.axis)) {
-      target
-        .closest('[contenteditable="true"]')
-        ?.dispatchEvent(new InputEvent("input", { bubbles: true }));
-      hooks.changed();
+    const table = drag.cell.closest("table")!;
+    const old = Array.from(table.rows).map((row) =>
+      Array.from(row.cells).map((c) => c.getBoundingClientRect()),
+    );
+    const axis = drag.axis;
+    const from =
+      axis === "row"
+        ? (drag.cell.parentElement as HTMLTableRowElement).rowIndex
+        : drag.cell.cellIndex;
+    const to = target
+      ? axis === "row"
+        ? (target.parentElement as HTMLTableRowElement).rowIndex
+        : target.cellIndex
+      : from;
+    const tableIndex = Array.from(host.querySelectorAll("table")).indexOf(
+      table,
+    );
+    if (target && host.contains(target) && target.closest("table") === table) {
+      if (hooks.reorder) hooks.reorder(drag.cell, target, axis);
+      else if (reorderTable(drag.cell, target, axis)) {
+        target
+          .closest('[contenteditable="true"]')
+          ?.dispatchEvent(new InputEvent("input", { bubbles: true }));
+        hooks.changed();
+      }
+      if (
+        from !== to &&
+        !window.matchMedia?.("(prefers-reduced-motion: reduce)").matches
+      ) {
+        const order = Array.from(
+          { length: axis === "row" ? old.length : old[0].length },
+          (_, i) => i,
+        );
+        order.splice(to, 0, order.splice(from, 1)[0]);
+        const next = host.querySelectorAll("table")[tableIndex];
+        Array.from(next?.rows ?? []).forEach((row, r) =>
+          Array.from(row.cells).forEach((c, col) => {
+            const before =
+              old[axis === "row" ? order[r] : r]?.[
+                axis === "column" ? order[col] : col
+              ];
+            if (!before) return;
+            const after = c.getBoundingClientRect();
+            c.animate?.(
+              [
+                {
+                  transform: `translate(${before.left - after.left}px,${before.top - after.top}px)`,
+                },
+                { transform: "translate(0,0)" },
+              ],
+              { duration: 180, easing: "cubic-bezier(0.16, 1, 0.3, 1)" },
+            );
+          }),
+        );
+      }
     }
-    drag = null;
+    clearDrag();
+    refresh();
   }
   function prepareDrag(event: PointerEvent) {
     if (host.dataset.readonly === "true" || event.button !== 0) return;
@@ -447,17 +594,19 @@ export function createEditorInteractions(host: HTMLElement, hooks: Hooks) {
     );
     if (!cell) return;
     const rect = cell.getBoundingClientRect();
-    // The header row is the column handle, the way a spreadsheet reads it. The
-    // old 6px border bands were the only handles, so nothing a user would
-    // actually try (drag a column by its header, a row by its body) moved.
-    const header = cell.tagName === "TH";
-    const column = header || event.clientY - rect.top < 6;
-    const row = !header && event.clientX - rect.left < 6;
-    if (column || row || event.altKey) {
-      // A header press must stay text-editable, so only the border bands and the
-      // Alt gesture suppress the default; a header click is a no-op reorder.
-      if (!header) event.preventDefault();
-      drag = { cell, axis: column ? "column" : "row" };
+    const row =
+      event.altKey || (cell.cellIndex === 0 && event.clientX - rect.left < 10);
+    const column =
+      !row && (cell.tagName === "TH" || event.clientY - rect.top < 6);
+    if (column || row) {
+      if (row) event.preventDefault();
+      drag = { cell, axis: row ? "row" : "column" };
+    }
+  }
+  function cancelDrag(event: KeyboardEvent) {
+    if (event.key === "Escape") {
+      clearDrag();
+      closeMenu();
     }
   }
   function key(event: KeyboardEvent) {
@@ -484,9 +633,14 @@ export function createEditorInteractions(host: HTMLElement, hooks: Hooks) {
   }
   const scroll = () => {
     closeMenu();
+    positionToolbar();
   };
   host.addEventListener("pointerdown", prepareDrag);
   document.addEventListener("pointerup", drop);
+  document.addEventListener("pointermove", dragMove);
+  document.addEventListener("pointercancel", clearDrag);
+  document.addEventListener("keydown", cancelDrag);
+  host.addEventListener("click", tableClick);
   host.addEventListener("contextmenu", context);
   host.addEventListener("keydown", key, true);
   host.addEventListener("scroll", scroll, true);
@@ -496,6 +650,12 @@ export function createEditorInteractions(host: HTMLElement, hooks: Hooks) {
     destroy() {
       host.removeEventListener("pointerdown", prepareDrag);
       document.removeEventListener("pointerup", drop);
+      document.removeEventListener("pointermove", dragMove);
+      document.removeEventListener("pointercancel", clearDrag);
+      document.removeEventListener("keydown", cancelDrag);
+      host.removeEventListener("click", tableClick);
+      clearDrag();
+      toolbar.remove();
       host.removeEventListener("contextmenu", context);
       host.removeEventListener("keydown", key, true);
       host.removeEventListener("scroll", scroll, true);

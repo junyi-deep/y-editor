@@ -1,14 +1,19 @@
 import { describe, it, expect } from "vitest";
-import { CommandRegistry, fuzzyScore, shortcutLabel } from "../src/command-palette/registry";
+import {
+  CommandRegistry,
+  fuzzyScore,
+  shortcutLabel,
+} from "../src/command-palette/registry";
 import { findMatches, replaceMatches } from "../src/editor/markdown/find";
 import { mergePatch } from "../src/ai/merge";
 describe("commands and editing", () => {
   it("renders stored combos as platform glyphs without touching the binding", () => {
-    expect(shortcutLabel("Mod+q")).toBe("⌘Q");
-    expect(shortcutLabel("Mod+Shift+n")).toBe("⌘⇧N");
-    expect(shortcutLabel("Mod+,")).toBe("⌘,");
-    expect(shortcutLabel("Mod+/")).toBe("⌘/");
+    expect(shortcutLabel("Mod+q", "MacIntel")).toBe("⌘Q");
+    expect(shortcutLabel("Mod+Shift+n", "MacIntel")).toBe("⌘⇧N");
+    expect(shortcutLabel("Mod+,", "MacIntel")).toBe("⌘,");
+    expect(shortcutLabel("Mod+/", "MacIntel")).toBe("⌘/");
     expect(shortcutLabel()).toBe("");
+    expect(shortcutLabel("Mod+Shift+n", "Win32")).toBe("Ctrl+Shift+N");
   });
   it("does not fire disabled commands and distinguishes modifiers", async () => {
     let calls = 0;

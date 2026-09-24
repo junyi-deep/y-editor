@@ -1,3 +1,6 @@
+import type { InjectionKey } from "vue";
+export const commandRegistryKey: InjectionKey<CommandRegistry> =
+  Symbol("commands");
 import { matchesShortcut } from "./shortcuts";
 export interface EditorCommand {
   id: string;
@@ -46,12 +49,24 @@ const GLYPHS: Record<string, string> = {
  * stored spelling stays `Mod+Shift+n`: that is what the editor binds and what
  * ShortcutSettings shows while it captures a new combination.
  */
-export function shortcutLabel(shortcut?: string): string {
+export function shortcutLabel(
+  shortcut?: string,
+  platform = navigator.platform,
+): string {
   if (!shortcut) return "";
+  const mac = !/Win|Linux/i.test(platform);
   return shortcut
     .split("+")
-    .map((key) => GLYPHS[key] ?? key.toUpperCase())
-    .join("");
+    .map((key) =>
+      mac
+        ? (GLYPHS[key] ?? key.toUpperCase())
+        : key === "Mod"
+          ? "Ctrl"
+          : key.length === 1
+            ? key.toUpperCase()
+            : key,
+    )
+    .join(mac ? "" : "+");
 }
 export function fuzzyScore(query: string, value: string): number {
   if (!query.trim()) return 0;

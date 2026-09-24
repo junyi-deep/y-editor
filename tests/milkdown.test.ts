@@ -342,7 +342,11 @@ describe("Milkdown real editor integration", () => {
       }),
     );
     cells[4].dispatchEvent(
-      new MouseEvent("mousemove", { buttons: 1, bubbles: true, cancelable: true }),
+      new MouseEvent("mousemove", {
+        buttons: 1,
+        bubbles: true,
+        cancelable: true,
+      }),
     );
     document.dispatchEvent(new MouseEvent("mouseup", { bubbles: true }));
     expect(host.querySelectorAll(".selectedCell")).toHaveLength(4);
@@ -365,7 +369,9 @@ describe("Milkdown real editor integration", () => {
     const { host } = await open(input);
     host
       .querySelector("td")!
-      .dispatchEvent(new MouseEvent("contextmenu", { bubbles: true, cancelable: true }));
+      .dispatchEvent(
+        new MouseEvent("contextmenu", { bubbles: true, cancelable: true }),
+      );
     const expanded = document.querySelector(".editor-submenu.open");
     expect(expanded).not.toBeNull();
     expect(expanded!.textContent).toContain("内容居中");
@@ -396,4 +402,81 @@ describe("Milkdown real editor integration", () => {
     editor.format("undo");
     expect(editor.getMarkdown()).toBe(input);
   });
+});
+
+it("moves a body row with visible drag feedback and supports undo", async () => {
+  const input = "| A | B |\n| --- | --- |\n| 一 | 二 |\n| 三 | 四 |\n";
+  const { editor, host } = await open(input);
+  const cells = host.querySelectorAll("td");
+  cells[2].dispatchEvent(
+    new MouseEvent("pointerdown", {
+      button: 0,
+      clientX: 2,
+      clientY: 20,
+      bubbles: true,
+    }),
+  );
+  cells[0].dispatchEvent(new MouseEvent("pointermove", { bubbles: true }));
+  expect(host.querySelectorAll(".table-drag-source")).toHaveLength(2);
+  expect(host.querySelectorAll(".table-drop-target")).toHaveLength(2);
+  expect(document.querySelector(".table-drag-hint")?.textContent).toContain(
+    "行",
+  );
+  cells[0].dispatchEvent(new MouseEvent("pointerup", { bubbles: true }));
+  expect(editor.getMarkdown().indexOf("三")).toBeLessThan(
+    editor.getMarkdown().indexOf("一"),
+  );
+  expect(document.querySelector(".table-drag-hint")).toBeNull();
+  editor.format("undo");
+  expect(editor.getMarkdown()).toBe(input);
+});
+it("shows seven table actions and deletes the table through an undoable transaction", async () => {
+  const input = "| A | B |\n| --- | --- |\n| 一 | 二 |\n";
+  const { editor, host } = await open(input);
+  const cell = host.querySelector("td")!;
+  cell.dispatchEvent(
+    new MouseEvent("mousedown", { button: 0, bubbles: true, cancelable: true }),
+  );
+  document.dispatchEvent(new MouseEvent("mouseup", { bubbles: true }));
+  cell.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+  const toolbar = document.querySelector<HTMLElement>(".table-actions")!;
+  expect(toolbar.hidden).toBe(false);
+  expect(toolbar.querySelectorAll("button")).toHaveLength(7);
+  toolbar.querySelector<HTMLButtonElement>('[aria-label="删除表格"]')!.click();
+  expect(host.querySelector("table")).toBeNull();
+  editor.format("undo");
+  expect(editor.getMarkdown()).toBe(input);
+});
+it("reports precise source line and column coordinates for repeated text", async () => {
+  const input = "first\n\nrepeat\n\nrepeat\n";
+  const { editor, host } = await open(input);
+  editor.toggleSourceMode();
+  const cm = EditorView.findFromDOM(host.querySelector(".cm-editor")!)!;
+  const start = input.lastIndexOf("repeat");
+  cm.dispatch({ selection: { anchor: start, head: start + 6 } });
+  expect(editor.getSelection(true)).toEqual({
+    text: "repeat",
+    rangeLabel: "Line5:0~Line5:6",
+  });
+  expect(editor.getMarkdown()).toBe(input);
+});
+
+it("maps rich-text selections to the second repeated phrase without changing Markdown", async () => {
+  const input = "repeat\n\nrepeat\n";
+  const { editor, host } = await open(input);
+  const prose = host.querySelector<HTMLElement>('[contenteditable="true"]')!;
+  prose.focus();
+  const node = prose.querySelectorAll("p")[1].firstChild!;
+  const range = document.createRange();
+  range.setStart(node, 1);
+  range.setEnd(node, 5);
+  window.getSelection()!.removeAllRanges();
+  window.getSelection()!.addRange(range);
+  document.dispatchEvent(new Event("selectionchange"));
+  await new Promise((resolve) => setTimeout(resolve, 30));
+  expect(editor.getSelection(true)).toEqual({
+    text: "epea",
+    rangeLabel: "Line3:1~Line3:5",
+  });
+  expect(editor.getMarkdown()).toBe(input);
 });

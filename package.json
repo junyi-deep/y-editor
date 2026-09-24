@@ -1,7 +1,7 @@
 {
   "name": "y-editor",
   "private": true,
-  "version": "0.1.0-dev.1",
+  "version": "0.0.4",
   "type": "module",
   "scripts": {
     "dev": "vite",

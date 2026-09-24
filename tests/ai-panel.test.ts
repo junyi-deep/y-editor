@@ -111,10 +111,15 @@ it("references an image through @ instead of an upload control", async () => {
   const wrapper = await open();
   expect(wrapper.find("input[type=file]").exists()).toBe(false);
   const textarea = wrapper.get("textarea");
+  await textarea.trigger("focus");
   await textarea.setValue("看图 @shot");
-  const choices = wrapper.findAll(".ai-suggestions button");
+  await settle();
+  const choices = document.querySelectorAll<HTMLButtonElement>(
+    ".ai-suggestions button",
+  );
   expect(choices).toHaveLength(1);
-  await choices[0].trigger("click");
+  expect(wrapper.get("form").element.contains(choices[0])).toBe(false);
+  choices[0].click();
   await settle();
   expect(mocks.imageRead).toHaveBeenCalledWith({
     documentPath: "/ws/shot.png",
@@ -125,5 +130,61 @@ it("references an image through @ instead of an upload control", async () => {
   expect(chips).toHaveLength(1);
   expect(chips[0].find("img").exists()).toBe(true);
   expect(textarea.element.value).toBe("看图 ");
+  wrapper.unmount();
+});
+
+it("shows changes immediately and enables approval without an extra review click", async () => {
+  const { useAiStore } = await import("../src/stores/ai");
+  const { useDocumentStore } = await import("../src/stores/document");
+  const doc = useDocumentStore();
+  doc.content = "before\n";
+  const ai = useAiStore();
+  ai.receivePatch({ path: "", original: "before\n", proposed: "after\n" });
+  const wrapper = await open();
+  const accept = wrapper
+    .findAll("button")
+    .find((b) => b.text() === "接受修改")!;
+  expect((accept.element as HTMLButtonElement).disabled).toBe(false);
+  await accept.trigger("click");
+  expect(doc.content).toBe("after\n");
+  expect(ai.patches[0].status).toBe("accepted");
+  wrapper.unmount();
+});
+it("opens session search in a separate dialog and dismisses it with Escape", async () => {
+  const wrapper = await open();
+  await wrapper.get('button[title^="会话列表"]').trigger("click");
+  await settle();
+  const search = document.querySelector<HTMLInputElement>(
+    '[aria-label="搜索会话"]',
+  );
+  expect(search).not.toBeNull();
+  expect(wrapper.element.contains(search)).toBe(false);
+  search!.dispatchEvent(
+    new KeyboardEvent("keydown", { key: "Escape", bubbles: true }),
+  );
+  await settle();
+  expect(document.querySelector('[aria-label="搜索会话"]')).toBeNull();
+  wrapper.unmount();
+});
+
+it("keeps Shift+Enter as a newline while command suggestions are open", async () => {
+  const { useAiStore } = await import("../src/stores/ai");
+  const ai = useAiStore();
+  const reset = vi.spyOn(ai, "reset").mockResolvedValue(undefined);
+  const wrapper = await open();
+  const textarea = wrapper.get("textarea");
+  await textarea.trigger("focus");
+  await textarea.setValue("/");
+  await settle();
+  const event = new KeyboardEvent("keydown", {
+    key: "Enter",
+    shiftKey: true,
+    bubbles: true,
+    cancelable: true,
+  });
+  textarea.element.dispatchEvent(event);
+  expect(event.defaultPrevented).toBe(false);
+  expect(reset).not.toHaveBeenCalled();
+  expect(textarea.element.value).toBe("/");
   wrapper.unmount();
 });

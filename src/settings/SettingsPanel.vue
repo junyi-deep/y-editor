@@ -4,7 +4,7 @@ import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 import { computed, ref, onMounted, onBeforeUnmount } from "vue";
 import ResourcesPanel from "./ResourcesPanel.vue";
-import { trapDialogTab } from "../services/focus";
+import { trapDialogTab, useDialogEscape } from "../services/focus";
 import ShortcutSettings from "./ShortcutSettings.vue";
 import CssEditor from "./CssEditor.vue";
 import { themePresets } from "./themes";
@@ -26,6 +26,7 @@ const props = defineProps<{ registry: CommandRegistry }>();
 const cssOpen = ref(false);
 const aiCategory = ref("模型服务");
 const panel = ref<HTMLElement>();
+useDialogEscape(() => (cssOpen.value ? undefined : panel.value), close);
 const previousFocus = document.activeElement as HTMLElement | null;
 onMounted(() => panel.value?.querySelector<HTMLInputElement>("input")?.focus());
 onBeforeUnmount(() => previousFocus?.isConnected && previousFocus.focus());
@@ -86,7 +87,7 @@ async function close() {
 }
 </script>
 <template>
-  <div class="modal-shade" @keydown.esc="close">
+  <div class="modal-shade">
     <section
       ref="panel"
       class="settings-panel"
@@ -97,7 +98,7 @@ async function close() {
     >
       <header>
         <h2>偏好设置</h2>
-        <Button aria-label="关闭设置" @click="close">
+        <Button aria-label="关闭设置" shortcut="Escape" @click="close">
           <UiIcon name="close" />
         </Button>
       </header>
@@ -137,7 +138,10 @@ async function close() {
           ></template>
           <template v-if="category === '编辑器'">
             <h3>编辑器</h3>
-            <label class="setting-row">自动渲染大型 Mermaid 图表<Switch v-model="settings.value.renderLargeDiagrams" /></label>
+            <label class="setting-row"
+              >自动渲染大型 Mermaid 图表<Switch
+                v-model="settings.value.renderLargeDiagrams"
+            /></label>
             <label class="setting-row"
               >附件目录<Input
                 v-model="settings.value.attachmentFolder"

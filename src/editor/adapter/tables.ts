@@ -1,4 +1,5 @@
 export type TableAction =
+  | "deleteTable"
   | "addRowBefore"
   | "addColumnBefore"
   | "addRow"
@@ -34,6 +35,10 @@ export function mutateTable(
   selection?: Range | null,
 ): HTMLTableCellElement | null {
   const table = cell.closest("table");
+  if (action === "deleteTable") {
+    table?.remove();
+    return null;
+  }
   if (!table) return null;
   const row = cell.parentElement as HTMLTableRowElement;
   const column = cell.cellIndex;

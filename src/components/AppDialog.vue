@@ -1,6 +1,11 @@
 <script setup lang="ts">
 import { nextTick, ref, watch } from "vue";
 import { dialog, finishDialog } from "../services/dialog";
+import { useDialogEscape } from "../services/focus";
+useDialogEscape(
+  () => panel.value,
+  () => finishDialog(null),
+);
 const field = ref("");
 const panel = ref<HTMLElement>();
 let previous: HTMLElement | null = null;

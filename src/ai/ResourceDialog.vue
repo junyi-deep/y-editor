@@ -10,9 +10,20 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-import { onMounted, ref, computed } from "vue";
+import { onMounted, onBeforeUnmount, ref, computed } from "vue";
 import { call } from "../services/backend";
 import ResourcesPanel from "../settings/ResourcesPanel.vue";
+import { trapDialogTab, useDialogEscape } from "../services/focus";
+const panel = ref<HTMLElement>();
+const previous = document.activeElement as HTMLElement | null;
+onMounted(() =>
+  panel.value?.querySelector<HTMLElement>("input,button")?.focus(),
+);
+onBeforeUnmount(() => previous?.isConnected && previous.focus());
+useDialogEscape(
+  () => panel.value,
+  () => emit("close"),
+);
 const emit = defineEmits<{ close: [] }>();
 const items = ref<{ id: string; name: string; kind: string; path?: string }[]>(
     [],
@@ -62,8 +73,10 @@ async function toggle(id: string) {
 onMounted(refresh);
 </script>
 <template>
-  <div class="modal-shade" @keydown.esc.stop="emit('close')">
+  <div class="modal-shade">
     <section
+      ref="panel"
+      @keydown="trapDialogTab"
       class="resource-dialog"
       role="dialog"
       aria-modal="true"
@@ -73,7 +86,12 @@ onMounted(refresh);
         <h3>工作空间 AI 资源</h3>
         <Button @click="emit('close')">关闭</Button>
       </header>
-      <Input v-model="query" placeholder="搜索资源" />
+      <Input
+        v-model="query"
+        aria-label="搜索资源"
+        placeholder="搜索资源"
+        class="quiet-search"
+      />
       <table class="settings-table">
         <thead>
           <tr>
@@ -95,7 +113,7 @@ onMounted(refresh);
             </td>
           </tr>
           <tr v-if="!filtered.length">
-            <td colspan="4" class="empty-hint">没有匹配的资源</td>
+            <td colspan="3" class="empty-hint">没有匹配的资源</td>
           </tr>
         </tbody>
       </table>

@@ -25,6 +25,11 @@ export function createMermaidRenderer(
   const origins = new WeakMap<HTMLElement, HTMLElement>();
   const states = new Map<HTMLElement, DiagramState>();
   const dialogs = new Set<HTMLDialogElement>();
+  const sizes = new Map<HTMLElement, ResizeObserver>();
+  function releaseSize(host: HTMLElement) {
+    sizes.get(host)?.disconnect();
+    sizes.delete(host);
+  }
   let disposed = false;
   const observer = new IntersectionObserver(
     (entries) =>
@@ -96,6 +101,7 @@ export function createMermaidRenderer(
     }
   }
   function controls(host: HTMLElement, svg: string, presentation = false) {
+    releaseSize(host);
     const viewport = document.createElement("div");
     viewport.className = "diagram-viewport";
     const stage = document.createElement("div");
@@ -109,9 +115,34 @@ export function createMermaidRenderer(
     let scale = 1,
       x = 0,
       y = 0;
+    const vector = stage.querySelector("svg");
+    const box = vector?.getAttribute("viewBox")?.split(/[ ,]+/).map(Number);
+    const width = box?.[2] || Number(vector?.getAttribute("width")) || 800;
+    const height = box?.[3] || Number(vector?.getAttribute("height")) || 600;
     const transform = () => {
-      stage.style.transform = `translate(${x}px,${y}px) scale(${scale})`;
+      const available = viewport.clientWidth || width;
+      const fit = Math.min(
+        1,
+        available / width,
+        (window.innerHeight * 0.7) / height,
+      );
+      // Resize vector geometry so WebKit rerasterizes labels at every zoom level.
+      // A CSS scale on a composited layer merely magnifies its old bitmap.
+      if (vector) {
+        vector.style.width = `${width * fit * scale}px`;
+        vector.style.height = `${height * fit * scale}px`;
+        vector.style.maxWidth = "none";
+        vector.style.maxHeight = "none";
+      }
+      if (!presentation)
+        viewport.style.height = `${Math.max(120, height * fit)}px`;
+      stage.style.transform = `translate(${x}px,${y}px)`;
+      stage.dataset.zoom = String(scale);
     };
+    const size = new ResizeObserver(transform);
+    size.observe(viewport);
+    sizes.set(host, size);
+    transform();
     let drag:
       | { x: number; y: number; fromX: number; fromY: number }
       | undefined;
@@ -150,7 +181,13 @@ export function createMermaidRenderer(
       const button = document.createElement("button");
       button.type = "button";
       button.textContent = label;
-      button.title = label;
+      button.title =
+        label === "关闭"
+          ? "关闭 · Esc"
+          : ["+", "−"].includes(label)
+            ? `${label === "+" ? "放大" : "缩小"} · Ctrl+滚轮`
+            : `${label} · 未设置快捷键`;
+      button.setAttribute("aria-label", label);
       button.onclick = (e) => {
         e.preventDefault();
         e.stopPropagation();
@@ -270,12 +307,24 @@ export function createMermaidRenderer(
     cleanupImmersion = () => {
       clearTimeout(timer);
       states.delete(preview);
+      releaseSize(preview);
       panel.remove();
       if (editorHost) editorHost.style.visibility = "";
       immersion = undefined;
       cleanupImmersion = undefined;
       hooks.immersive?.(false);
     };
+    exit.title = "完成 · Esc";
+    panel.setAttribute("role", "dialog");
+    panel.setAttribute("aria-label", "Mermaid 沉浸编辑");
+    panel.onkeydown = (event) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        event.stopPropagation();
+        exit.click();
+      }
+    };
+    source.focus();
     exit.onclick = () => {
       hooks.update?.(host, source.value);
       hooks.changed?.();
@@ -308,6 +357,7 @@ export function createMermaidRenderer(
     controls(dialog, svg, true);
     document.documentElement.classList.add("diagram-presenting");
     dialog.onclose = () => {
+      releaseSize(dialog);
       dialogs.delete(dialog);
       dialog.remove();
       if (!dialogs.size)
@@ -425,6 +475,7 @@ export function createMermaidRenderer(
       }
     },
     forget(host: HTMLElement) {
+      releaseSize(host);
       observer.unobserve(host);
       const state = states.get(host);
       if (state) state.generation++;
@@ -433,6 +484,7 @@ export function createMermaidRenderer(
     refresh() {
       for (const [host, state] of states) {
         if (!host.isConnected) {
+          releaseSize(host);
           states.delete(host);
           continue;
         }
@@ -449,6 +501,8 @@ export function createMermaidRenderer(
       cleanupImmersion?.();
       observer.disconnect();
       states.clear();
+      for (const size of sizes.values()) size.disconnect();
+      sizes.clear();
       for (const dialog of dialogs) dialog.remove();
       dialogs.clear();
       document.documentElement.classList.remove("diagram-presenting");

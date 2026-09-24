@@ -1,6 +1,6 @@
 [package]
 name = "y-editor"
-version = "0.1.0-dev.1"
+version = "0.0.4"
 description = "A local-first Markdown editor"
 authors = ["y-editor contributors"]
 edition = "2021"

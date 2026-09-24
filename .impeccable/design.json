@@ -1,0 +1,420 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-09-24T11:30:14.127048+00:00",
+  "title": "Design System: y-editor",
+  "extensions": {
+    "colorMeta": {
+      "bg": {
+        "role": "neutral",
+        "displayName": "Bg",
+        "tonalRamp": [
+          "oklch(15.00% 0.00000 89.88)",
+          "oklch(26.43% 0.00000 89.88)",
+          "oklch(37.86% 0.00000 89.88)",
+          "oklch(49.29% 0.00000 89.88)",
+          "oklch(60.71% 0.00000 89.88)",
+          "oklch(72.14% 0.00000 89.88)",
+          "oklch(83.57% 0.00000 89.88)",
+          "oklch(95.00% 0.00000 89.88)"
+        ]
+      },
+      "panel": {
+        "role": "neutral",
+        "displayName": "Panel",
+        "tonalRamp": [
+          "oklch(15.00% 0.00412 91.45)",
+          "oklch(26.43% 0.00412 91.45)",
+          "oklch(37.86% 0.00412 91.45)",
+          "oklch(49.29% 0.00412 91.45)",
+          "oklch(60.71% 0.00412 91.45)",
+          "oklch(72.14% 0.00412 91.45)",
+          "oklch(83.57% 0.00412 91.45)",
+          "oklch(95.00% 0.00412 91.45)"
+        ]
+      },
+      "text": {
+        "role": "neutral",
+        "displayName": "Text",
+        "tonalRamp": [
+          "oklch(15.00% 0.00874 233.95)",
+          "oklch(26.43% 0.00874 233.95)",
+          "oklch(37.86% 0.00874 233.95)",
+          "oklch(49.29% 0.00874 233.95)",
+          "oklch(60.71% 0.00874 233.95)",
+          "oklch(72.14% 0.00874 233.95)",
+          "oklch(83.57% 0.00874 233.95)",
+          "oklch(95.00% 0.00874 233.95)"
+        ]
+      },
+      "muted": {
+        "role": "neutral",
+        "displayName": "Muted",
+        "tonalRamp": [
+          "oklch(15.00% 0.00805 88.69)",
+          "oklch(26.43% 0.00805 88.69)",
+          "oklch(37.86% 0.00805 88.69)",
+          "oklch(49.29% 0.00805 88.69)",
+          "oklch(60.71% 0.00805 88.69)",
+          "oklch(72.14% 0.00805 88.69)",
+          "oklch(83.57% 0.00805 88.69)",
+          "oklch(95.00% 0.00805 88.69)"
+        ]
+      },
+      "border": {
+        "role": "neutral",
+        "displayName": "Border",
+        "tonalRamp": [
+          "oklch(15.00% 0.00000 89.88)",
+          "oklch(26.43% 0.00000 89.88)",
+          "oklch(37.86% 0.00000 89.88)",
+          "oklch(49.29% 0.00000 89.88)",
+          "oklch(60.71% 0.00000 89.88)",
+          "oklch(72.14% 0.00000 89.88)",
+          "oklch(83.57% 0.00000 89.88)",
+          "oklch(95.00% 0.00000 89.88)"
+        ]
+      },
+      "hover": {
+        "role": "neutral",
+        "displayName": "Hover",
+        "tonalRamp": [
+          "oklch(15.00% 0.00414 91.45)",
+          "oklch(26.43% 0.00414 91.45)",
+          "oklch(37.86% 0.00414 91.45)",
+          "oklch(49.29% 0.00414 91.45)",
+          "oklch(60.71% 0.00414 91.45)",
+          "oklch(72.14% 0.00414 91.45)",
+          "oklch(83.57% 0.00414 91.45)",
+          "oklch(95.00% 0.00414 91.45)"
+        ]
+      },
+      "accent": {
+        "role": "primary",
+        "displayName": "Accent",
+        "tonalRamp": [
+          "oklch(15.00% 0.12047 250.22)",
+          "oklch(26.43% 0.12047 250.22)",
+          "oklch(37.86% 0.12047 250.22)",
+          "oklch(49.29% 0.12047 250.22)",
+          "oklch(60.71% 0.12047 250.22)",
+          "oklch(72.14% 0.12047 250.22)",
+          "oklch(83.57% 0.12047 250.22)",
+          "oklch(95.00% 0.12047 250.22)"
+        ]
+      },
+      "accent-ink": {
+        "role": "neutral",
+        "displayName": "Accent Ink",
+        "tonalRamp": [
+          "oklch(15.00% 0.00000 89.88)",
+          "oklch(26.43% 0.00000 89.88)",
+          "oklch(37.86% 0.00000 89.88)",
+          "oklch(49.29% 0.00000 89.88)",
+          "oklch(60.71% 0.00000 89.88)",
+          "oklch(72.14% 0.00000 89.88)",
+          "oklch(83.57% 0.00000 89.88)",
+          "oklch(95.00% 0.00000 89.88)"
+        ]
+      },
+      "danger": {
+        "role": "neutral",
+        "displayName": "Danger",
+        "tonalRamp": [
+          "oklch(15.00% 0.16766 27.34)",
+          "oklch(26.43% 0.16766 27.34)",
+          "oklch(37.86% 0.16766 27.34)",
+          "oklch(49.29% 0.16766 27.34)",
+          "oklch(60.71% 0.16766 27.34)",
+          "oklch(72.14% 0.16766 27.34)",
+          "oklch(83.57% 0.16766 27.34)",
+          "oklch(95.00% 0.16766 27.34)"
+        ]
+      },
+      "selected": {
+        "role": "neutral",
+        "displayName": "Selected",
+        "tonalRamp": [
+          "oklch(15.00% 0.00000 89.88)",
+          "oklch(26.43% 0.00000 89.88)",
+          "oklch(37.86% 0.00000 89.88)",
+          "oklch(49.29% 0.00000 89.88)",
+          "oklch(60.71% 0.00000 89.88)",
+          "oklch(72.14% 0.00000 89.88)",
+          "oklch(83.57% 0.00000 89.88)",
+          "oklch(95.00% 0.00000 89.88)"
+        ]
+      },
+      "dark-bg": {
+        "role": "neutral",
+        "displayName": "Dark Bg",
+        "tonalRamp": [
+          "oklch(15.00% 0.00000 89.88)",
+          "oklch(26.43% 0.00000 89.88)",
+          "oklch(37.86% 0.00000 89.88)",
+          "oklch(49.29% 0.00000 89.88)",
+          "oklch(60.71% 0.00000 89.88)",
+          "oklch(72.14% 0.00000 89.88)",
+          "oklch(83.57% 0.00000 89.88)",
+          "oklch(95.00% 0.00000 89.88)"
+        ]
+      },
+      "dark-panel": {
+        "role": "neutral",
+        "displayName": "Dark Panel",
+        "tonalRamp": [
+          "oklch(15.00% 0.00000 89.88)",
+          "oklch(26.43% 0.00000 89.88)",
+          "oklch(37.86% 0.00000 89.88)",
+          "oklch(49.29% 0.00000 89.88)",
+          "oklch(60.71% 0.00000 89.88)",
+          "oklch(72.14% 0.00000 89.88)",
+          "oklch(83.57% 0.00000 89.88)",
+          "oklch(95.00% 0.00000 89.88)"
+        ]
+      },
+      "dark-text": {
+        "role": "neutral",
+        "displayName": "Dark Text",
+        "tonalRamp": [
+          "oklch(15.00% 0.00000 89.88)",
+          "oklch(26.43% 0.00000 89.88)",
+          "oklch(37.86% 0.00000 89.88)",
+          "oklch(49.29% 0.00000 89.88)",
+          "oklch(60.71% 0.00000 89.88)",
+          "oklch(72.14% 0.00000 89.88)",
+          "oklch(83.57% 0.00000 89.88)",
+          "oklch(95.00% 0.00000 89.88)"
+        ]
+      },
+      "dark-muted": {
+        "role": "neutral",
+        "displayName": "Dark Muted",
+        "tonalRamp": [
+          "oklch(15.00% 0.00000 89.88)",
+          "oklch(26.43% 0.00000 89.88)",
+          "oklch(37.86% 0.00000 89.88)",
+          "oklch(49.29% 0.00000 89.88)",
+          "oklch(60.71% 0.00000 89.88)",
+          "oklch(72.14% 0.00000 89.88)",
+          "oklch(83.57% 0.00000 89.88)",
+          "oklch(95.00% 0.00000 89.88)"
+        ]
+      },
+      "dark-border": {
+        "role": "neutral",
+        "displayName": "Dark Border",
+        "tonalRamp": [
+          "oklch(15.00% 0.00000 89.88)",
+          "oklch(26.43% 0.00000 89.88)",
+          "oklch(37.86% 0.00000 89.88)",
+          "oklch(49.29% 0.00000 89.88)",
+          "oklch(60.71% 0.00000 89.88)",
+          "oklch(72.14% 0.00000 89.88)",
+          "oklch(83.57% 0.00000 89.88)",
+          "oklch(95.00% 0.00000 89.88)"
+        ]
+      },
+      "dark-hover": {
+        "role": "neutral",
+        "displayName": "Dark Hover",
+        "tonalRamp": [
+          "oklch(15.00% 0.00000 89.88)",
+          "oklch(26.43% 0.00000 89.88)",
+          "oklch(37.86% 0.00000 89.88)",
+          "oklch(49.29% 0.00000 89.88)",
+          "oklch(60.71% 0.00000 89.88)",
+          "oklch(72.14% 0.00000 89.88)",
+          "oklch(83.57% 0.00000 89.88)",
+          "oklch(95.00% 0.00000 89.88)"
+        ]
+      },
+      "dark-accent": {
+        "role": "primary",
+        "displayName": "Dark Accent",
+        "tonalRamp": [
+          "oklch(15.00% 0.09082 250.64)",
+          "oklch(26.43% 0.09082 250.64)",
+          "oklch(37.86% 0.09082 250.64)",
+          "oklch(49.29% 0.09082 250.64)",
+          "oklch(60.71% 0.09082 250.64)",
+          "oklch(72.14% 0.09082 250.64)",
+          "oklch(83.57% 0.09082 250.64)",
+          "oklch(95.00% 0.09082 250.64)"
+        ]
+      },
+      "dark-danger": {
+        "role": "neutral",
+        "displayName": "Dark Danger",
+        "tonalRamp": [
+          "oklch(15.00% 0.13554 26.60)",
+          "oklch(26.43% 0.13554 26.60)",
+          "oklch(37.86% 0.13554 26.60)",
+          "oklch(49.29% 0.13554 26.60)",
+          "oklch(60.71% 0.13554 26.60)",
+          "oklch(72.14% 0.13554 26.60)",
+          "oklch(83.57% 0.13554 26.60)",
+          "oklch(95.00% 0.13554 26.60)"
+        ]
+      },
+      "dark-selected": {
+        "role": "neutral",
+        "displayName": "Dark Selected",
+        "tonalRamp": [
+          "oklch(15.00% 0.00000 89.88)",
+          "oklch(26.43% 0.00000 89.88)",
+          "oklch(37.86% 0.00000 89.88)",
+          "oklch(49.29% 0.00000 89.88)",
+          "oklch(60.71% 0.00000 89.88)",
+          "oklch(72.14% 0.00000 89.88)",
+          "oklch(83.57% 0.00000 89.88)",
+          "oklch(95.00% 0.00000 89.88)"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "body": {
+        "displayName": "System UI",
+        "purpose": "Desktop controls and chrome; editor typography is independent."
+      }
+    },
+    "shadows": [
+      {
+        "name": "--y-shadow-sm / md / lg",
+        "value": "0 4px 16px rgb(0 0 0 / 0.04)",
+        "purpose": "Restrained overlay separation; all three currently share a value."
+      }
+    ],
+    "motion": [
+      {
+        "name": "--y-ease",
+        "value": "120ms ease",
+        "purpose": "Quiet control state changes; disabled for reduced motion."
+      },
+      {
+        "name": "table-reorder",
+        "value": "180ms cubic-bezier(0.16, 1, 0.3, 1)",
+        "purpose": "Cell transforms after a real reorder; skipped for reduced motion."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "document-inset",
+        "value": "900px"
+      },
+      {
+        "name": "compact-settings",
+        "value": "700px"
+      },
+      {
+        "name": "ai-container",
+        "value": "300px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Owned compact button; primary reflects the desktop .primary override.",
+      "html": "<button class=\"ds-button-primary\">继续</button>",
+      "css": ".ds-button-primary{font:500 13px -apple-system,BlinkMacSystemFont,\"Segoe UI\",sans-serif;border-radius:var(--y-radius-control,6px);padding:4px 8px;min-height:28px;cursor:pointer;transition:background-color var(--y-ease,120ms ease),color var(--y-ease,120ms ease);background:var(--y-text,#2f3437);color:var(--y-bg,#ffffff);border:1px solid transparent;}.ds-button-primary:hover{opacity:.88;}.ds-button-primary:focus-visible{outline:2px solid var(--y-accent,#4183c4);outline-offset:2px;}.ds-button-primary:disabled{opacity:.5;pointer-events:none;}"
+    },
+    {
+      "name": "Ghost button",
+      "kind": "button",
+      "refersTo": "button-ghost",
+      "description": "Owned compact button; primary reflects the desktop .primary override.",
+      "html": "<button class=\"ds-button-ghost\">继续</button>",
+      "css": ".ds-button-ghost{font:500 13px -apple-system,BlinkMacSystemFont,\"Segoe UI\",sans-serif;border-radius:var(--y-radius-control,6px);padding:4px 8px;min-height:28px;cursor:pointer;transition:background-color var(--y-ease,120ms ease),color var(--y-ease,120ms ease);background:transparent;color:var(--y-text,#2f3437);border:1px solid transparent;}.ds-button-ghost:hover{background:var(--y-hover,#efeeeb);}.ds-button-ghost:focus-visible{outline:2px solid var(--y-accent,#4183c4);outline-offset:2px;}.ds-button-ghost:disabled{opacity:.5;pointer-events:none;}"
+    },
+    {
+      "name": "Accent button",
+      "kind": "button",
+      "refersTo": "button-accent",
+      "description": "Owned compact button; primary reflects the desktop .primary override.",
+      "html": "<button class=\"ds-button-accent\">继续</button>",
+      "css": ".ds-button-accent{font:500 13px -apple-system,BlinkMacSystemFont,\"Segoe UI\",sans-serif;border-radius:var(--y-radius-control,6px);padding:4px 8px;min-height:28px;cursor:pointer;transition:background-color var(--y-ease,120ms ease),color var(--y-ease,120ms ease);background:var(--y-accent,#4183c4);color:var(--y-accent-ink,#1b1b1b);border:1px solid transparent;}.ds-button-accent:hover{opacity:.9;}.ds-button-accent:focus-visible{outline:2px solid var(--y-accent,#4183c4);outline-offset:2px;}.ds-button-accent:disabled{opacity:.5;pointer-events:none;}"
+    },
+    {
+      "name": "Outline button",
+      "kind": "button",
+      "description": "Owned compact button; primary reflects the desktop .primary override.",
+      "html": "<button class=\"ds-button-outline\">继续</button>",
+      "css": ".ds-button-outline{font:500 13px -apple-system,BlinkMacSystemFont,\"Segoe UI\",sans-serif;border-radius:var(--y-radius-control,6px);padding:4px 8px;min-height:28px;cursor:pointer;transition:background-color var(--y-ease,120ms ease),color var(--y-ease,120ms ease);background:var(--y-bg,#ffffff);color:var(--y-text,#2f3437);border:1px solid var(--y-border,#eaeaea);}.ds-button-outline:hover{background:var(--y-hover,#efeeeb);}.ds-button-outline:focus-visible{outline:2px solid var(--y-accent,#4183c4);outline-offset:2px;}.ds-button-outline:disabled{opacity:.5;pointer-events:none;}"
+    },
+    {
+      "name": "Secondary button",
+      "kind": "button",
+      "description": "Owned compact button; primary reflects the desktop .primary override.",
+      "html": "<button class=\"ds-button-secondary\">继续</button>",
+      "css": ".ds-button-secondary{font:500 13px -apple-system,BlinkMacSystemFont,\"Segoe UI\",sans-serif;border-radius:var(--y-radius-control,6px);padding:4px 8px;min-height:28px;cursor:pointer;transition:background-color var(--y-ease,120ms ease),color var(--y-ease,120ms ease);background:var(--y-hover,#efeeeb);color:var(--y-text,#2f3437);border:1px solid transparent;}.ds-button-secondary:hover{opacity:.8;}.ds-button-secondary:focus-visible{outline:2px solid var(--y-accent,#4183c4);outline-offset:2px;}.ds-button-secondary:disabled{opacity:.5;pointer-events:none;}"
+    },
+    {
+      "name": "Destructive button",
+      "kind": "button",
+      "description": "Owned compact button; primary reflects the desktop .primary override.",
+      "html": "<button class=\"ds-button-destructive\">继续</button>",
+      "css": ".ds-button-destructive{font:500 13px -apple-system,BlinkMacSystemFont,\"Segoe UI\",sans-serif;border-radius:var(--y-radius-control,6px);padding:4px 8px;min-height:28px;cursor:pointer;transition:background-color var(--y-ease,120ms ease),color var(--y-ease,120ms ease);background:var(--y-danger,#bc3a33);color:#ffffff;border:1px solid transparent;}.ds-button-destructive:hover{opacity:.9;}.ds-button-destructive:focus-visible{outline:2px solid var(--y-accent,#4183c4);outline-offset:2px;}.ds-button-destructive:disabled{opacity:.5;pointer-events:none;}"
+    },
+    {
+      "name": "Link button",
+      "kind": "button",
+      "description": "Owned compact button; primary reflects the desktop .primary override.",
+      "html": "<button class=\"ds-button-link\">继续</button>",
+      "css": ".ds-button-link{font:500 13px -apple-system,BlinkMacSystemFont,\"Segoe UI\",sans-serif;border-radius:var(--y-radius-control,6px);padding:4px 8px;min-height:28px;cursor:pointer;transition:background-color var(--y-ease,120ms ease),color var(--y-ease,120ms ease);background:transparent;color:var(--y-accent,#4183c4);border:1px solid transparent;}.ds-button-link:hover{text-decoration:underline;text-underline-offset:4px;}.ds-button-link:focus-visible{outline:2px solid var(--y-accent,#4183c4);outline-offset:2px;}.ds-button-link:disabled{opacity:.5;pointer-events:none;}"
+    },
+    {
+      "name": "Text field",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Owned field with token border and keyboard focus.",
+      "html": "<input class=\"ds-field\" aria-label=\"模型 ID\" placeholder=\"模型 ID\">",
+      "css": ".ds-field{font:13px -apple-system,BlinkMacSystemFont,\"Segoe UI\",sans-serif;padding:4px 8px;border:1px solid var(--y-border,#eaeaea);border-radius:var(--y-radius-control,6px);color:var(--y-text,#2f3437);background:transparent;min-width:0;}.ds-field:hover{border-color:var(--y-muted,#706e69);}.ds-field:focus-visible{outline:2px solid var(--y-accent,#4183c4);outline-offset:2px;}"
+    },
+    {
+      "name": "Sidebar tab",
+      "kind": "nav",
+      "description": "Compact neutral active-tab state.",
+      "html": "<nav aria-label=\"侧栏\"><button class=\"ds-tab\" aria-current=\"page\">文件</button><button class=\"ds-tab\">大纲</button></nav>",
+      "css": ".ds-tab{font:500 13px -apple-system,BlinkMacSystemFont,\"Segoe UI\",sans-serif;border-radius:var(--y-radius-control,6px);padding:4px 8px;min-height:28px;cursor:pointer;transition:background-color var(--y-ease,120ms ease),color var(--y-ease,120ms ease);height:28px;padding:0 10px;border:0;background:transparent;color:var(--y-text,#2f3437);}.ds-tab[aria-current]{background:var(--y-selected,#e3e3e3);}.ds-tab:hover{background:var(--y-hover,#efeeeb);}.ds-tab:focus-visible{outline:2px solid var(--y-accent,#4183c4);outline-offset:2px;}"
+    },
+    {
+      "name": "Composer surface",
+      "kind": "custom",
+      "refersTo": "composer",
+      "description": "Bordered writing field; suggestions attach above this surface.",
+      "html": "<div class=\"ds-composer\"><textarea aria-label=\"消息\" placeholder=\"讨论当前文档…\"></textarea></div>",
+      "css": ".ds-composer{padding:10px;border:1px solid var(--y-border,#eaeaea);border-radius:8px;background:var(--y-bg,#fff);}.ds-composer:focus-within{border-color:var(--y-muted,#706e69);}.ds-composer textarea{width:100%;min-height:64px;max-height:220px;font:13px/1.6 -apple-system,BlinkMacSystemFont,\"Segoe UI\",sans-serif;color:var(--y-text,#2f3437);padding:2px 0 8px;border:0;background:transparent;resize:vertical;}.ds-composer textarea:focus-visible{outline:none;}"
+    }
+  ],
+  "narrative": {
+    "northStar": "Minimalist desktop writing workspace",
+    "overview": "A quiet, compact desktop workspace leaves room for Markdown and reviewable AI edits. Warm neutral panels, fine borders, charcoal actions, system typography and Phosphor Bold icons carry the user-selected minimalist direction. Operate mode prioritizes writing, finding, comparing and applying changes.\n\nThis documents the implemented system, not a new visual identity. Runtime themes and editor typography remain user choices. No marketing composition or imagery belongs in the writing workspace.",
+    "keyCharacteristics": [
+      "Compact chrome around a dominant document.",
+      "Flat surfaces with restrained overlay shadows.",
+      "Owned controls and shared runtime tokens.",
+      "Editable starter prompts and explicit approval modes."
+    ],
+    "rules": [
+      {
+        "name": "The Runtime Token Rule",
+        "body": "Resolve colors through `--y-*`, including in body-portalled overlays. Tailwind primary maps to `--y-accent`; Tailwind accent maps to the hover surface `--y-hover`.",
+        "section": "colors"
+      }
+    ],
+    "dos": [
+      "Do use --y-* tokens and the owned controls in src/components/ui/.",
+      "Do preserve selectable themes, readable focus states and reduced motion.",
+      "Do keep starter actions editable and show approval mode beside the composer.",
+      "Do record copied-component changes in PATCHES.md."
+    ],
+    "donts": [
+      "Don't enable Tailwind preflight or assign Tailwind z-N values to overlays.",
+      "Don't replace the editor DOM, CodeMirror, virtualized file tree or AppDialog.vue with generic UI wrappers.",
+      "Don't invent conversations, native screenshots or successful provider activity as design evidence.",
+      "Don't add decorative gradients, heavy shadows or marketing card grids to the workspace."
+    ]
+  }
+}

@@ -83,20 +83,38 @@ function replaceOne() {
         aria-label="查找"
         placeholder="查找"
         autofocus
-        @keydown.enter="next()"
+        @keydown.enter.prevent="next($event.shiftKey ? -1 : 1)"
       /><span>{{
         result.error
           ? "无效正则"
           : `${result.matches.length ? index + 1 : 0} / ${result.matches.length}`
       }}</span
       ><label
-        ><Checkbox v-model="options.caseSensitive" aria-label="区分大小写" />Aa</label
-      ><label><Checkbox v-model="options.regex" aria-label="正则表达式" />.*</label
-      ><Button title="上一个" aria-label="上一个" @click="next(-1)">
+        ><Checkbox
+          v-model="options.caseSensitive"
+          aria-label="区分大小写"
+        />Aa</label
+      ><label
+        ><Checkbox v-model="options.regex" aria-label="正则表达式" />.*</label
+      ><Button
+        title="上一个"
+        shortcut="Shift+Enter"
+        aria-label="上一个"
+        @click="next(-1)"
+      >
         <UiIcon name="up" /></Button
-      ><Button title="下一个" aria-label="下一个" @click="next()">
+      ><Button
+        title="下一个"
+        shortcut="Enter"
+        aria-label="下一个"
+        @click="next()"
+      >
         <UiIcon name="down" /></Button
-      ><Button aria-label="关闭查找" @click="ui.findOpen = false">
+      ><Button
+        aria-label="关闭查找"
+        shortcut="Escape"
+        @click="ui.findOpen = false"
+      >
         <UiIcon name="close"
       /></Button>
     </div>

@@ -735,9 +735,12 @@ kbd {
 }
 .ai-conversation > article.user {
   padding: 12px;
-  border: 1px solid var(--y-border);
-  background: var(--y-bg);
+  border: 0;
+  background: color-mix(in srgb, var(--y-text) 6%, var(--y-bg));
   border-radius: 8px;
+  width: fit-content;
+  max-width: 92%;
+  margin-left: auto;
 }
 .ai-conversation article small {
   font-size: 11px;
@@ -988,4 +991,167 @@ kbd {
   .ai-panel:not(.ai-fullscreen) {
     max-width: 55vw;
   }
+}
+
+/* AI proposals and the composer keep the document as the dominant surface. */
+.ai-suggestions[data-slot="popover-content"] {
+  width: var(--reka-popper-anchor-width);
+  max-height: min(280px, var(--reka-popover-content-available-height));
+  overflow: auto;
+  padding: 4px;
+  background: var(--y-bg);
+  color: var(--y-text);
+  border: 1px solid var(--y-border);
+  border-radius: 6px;
+}
+.ai-suggestions button {
+  width: 100%;
+  text-align: left;
+  justify-content: space-between;
+  white-space: normal;
+}
+.ai-suggestions button.active {
+  background: var(--y-hover);
+}
+.ai-composer-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 0 12px 10px;
+  color: var(--y-muted);
+  font-size: 11px;
+}
+.ai-composer-footer [data-slot="select-trigger"] {
+  width: auto;
+  max-width: 150px;
+  height: 28px;
+  border: 0;
+  background: transparent;
+  font-size: 12px;
+}
+.ai-composer-footer [data-slot="select-value"] small {
+  display: none;
+}
+.approval-option {
+  display: grid;
+  gap: 3px;
+  max-width: 290px;
+  white-space: normal;
+}
+.approval-option strong {
+  font-weight: 500;
+}
+.approval-option small {
+  color: var(--y-muted);
+  font-size: 11px;
+  line-height: 1.5;
+}
+.ai-history-dialog {
+  width: min(640px, calc(100vw - 32px));
+  max-width: 640px;
+  max-height: calc(100dvh - 48px);
+  overflow: hidden;
+  padding: 24px;
+  gap: 12px;
+}
+.history-scope {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--y-muted);
+  font-size: 12px;
+}
+.history-results {
+  overflow: auto;
+  min-height: 100px;
+  max-height: 55dvh;
+}
+.history-results article {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border-bottom: 1px solid var(--y-border);
+  padding: 6px 0;
+}
+.history-results .history-open {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  flex: 1;
+  min-width: 0;
+  height: auto;
+  padding: 10px 8px;
+  white-space: normal;
+}
+.history-open strong {
+  font-size: 13px;
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+.history-open small {
+  color: var(--y-muted);
+  font-size: 11px;
+  overflow-wrap: anywhere;
+  text-align: left;
+}
+.palette-input-row input:focus-visible,
+.settings-body > nav input:focus-visible,
+.quiet-search:focus-visible {
+  outline: none;
+  box-shadow: none;
+  border-color: var(--y-border);
+}
+.diagram-stage {
+  will-change: auto;
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+}
+.diagram-stage svg {
+  flex: none;
+}
+.table-actions {
+  position: fixed;
+  z-index: var(--y-z-popover);
+  display: flex;
+  gap: 1px;
+  padding: 3px;
+  background: var(--y-bg);
+  color: var(--y-text);
+  border: 1px solid var(--y-border);
+  border-radius: 5px;
+}
+.table-actions[hidden] {
+  display: none;
+}
+.table-actions button {
+  display: grid;
+  place-items: center;
+  width: 29px;
+  height: 27px;
+  padding: 0;
+  border: 0;
+  color: inherit;
+  background: transparent;
+}
+.table-drag-source {
+  opacity: 0.55;
+}
+.table-drop-target {
+  background: color-mix(in srgb, var(--y-text) 12%, var(--y-bg)) !important;
+  outline: 2px solid var(--y-muted);
+  outline-offset: -2px;
+}
+.table-drag-hint {
+  position: fixed;
+  z-index: var(--y-z-popover);
+  pointer-events: none;
+  padding: 6px 9px;
+  border: 1px solid var(--y-border);
+  border-radius: 4px;
+  background: var(--y-bg);
+  color: var(--y-text);
+  font-size: 12px;
 }

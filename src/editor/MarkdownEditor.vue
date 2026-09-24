@@ -1,10 +1,18 @@
 <script setup lang="ts">
-import { onBeforeUnmount, onMounted, ref, watch } from "vue";
+import { inject, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { createEditorAdapter } from "./adapter/milkdown";
 import type { Appearance, EditorAdapter } from "../types/editor";
 import { choose } from "../services/dialog";
 import { useSettingsStore } from "../stores/settings";
 import { call } from "../services/backend";
+import { commandRegistryKey, shortcutLabel } from "../command-palette/registry";
+const registry = inject(commandRegistryKey, undefined);
+const nativeShortcuts: Record<string, string> = {
+  cut: "Mod+x",
+  copy: "Mod+c",
+  paste: "Mod+v",
+  selectAll: "Mod+a",
+};
 const props = defineProps<{
   content: string;
   readOnly?: boolean;
@@ -43,6 +51,11 @@ onMounted(async () => {
       (value) => emit("change", value),
       props.appearance,
       {
+        shortcut: (action) =>
+          shortcutLabel(
+            registry?.list().find((c) => c.id === `editor.${action}`)
+              ?.shortcut ?? nativeShortcuts[action],
+          ),
         reference: (text, label) => emit("reference", text, label),
         immersive: (active) => emit("immersive", active),
         renderLargeDiagrams: () => props.renderLargeDiagrams !== false,

@@ -106,3 +106,80 @@ it("forks another workspace conversation and persists under the current workspac
     }),
   );
 });
+
+it("requests approval by default and applies a proposal only once", async () => {
+  const { useDocumentStore } = await import("../src/stores/document");
+  const doc = useDocumentStore();
+  doc.path = "/current/note.md";
+  doc.content = "before\n";
+  const ai = useAiStore();
+  ai.receivePatch({
+    path: doc.path,
+    original: doc.content,
+    proposed: "after\n",
+  });
+  await Promise.resolve();
+  expect(doc.content).toBe("before\n");
+  await ai.applyPatch(ai.patches[0]);
+  expect(doc.content).toBe("after\n");
+  expect(ai.patches[0].status).toBe("accepted");
+  const version = doc.version;
+  await ai.applyPatch(ai.patches[0]);
+  expect(doc.version).toBe(version);
+});
+it("assist approves only the current document and retains conflicting proposals", async () => {
+  const { useDocumentStore } = await import("../src/stores/document");
+  const doc = useDocumentStore();
+  doc.path = "/current/note.md";
+  doc.content = "before\n";
+  const ai = useAiStore();
+  ai.approvalMode = "assist";
+  ai.receivePatch({
+    path: doc.path,
+    original: doc.content,
+    proposed: "after\n",
+  });
+  await Promise.resolve();
+  await Promise.resolve();
+  expect(doc.content).toBe("after\n");
+  ai.receivePatch({ path: "/current/other.md", original: "a", proposed: "b" });
+  ai.receivePatch({
+    path: doc.path,
+    original: "before\n",
+    proposed: "conflicting\n",
+  });
+  await Promise.resolve();
+  await Promise.resolve();
+  await Promise.resolve();
+  expect(ai.patches.slice(1).map((p) => p.status)).toEqual([
+    "pending",
+    "pending",
+  ]);
+  expect(ai.error).toContain("冲突");
+  expect(mock.call).not.toHaveBeenCalledWith(
+    "apply_file_patch",
+    expect.anything(),
+  );
+});
+it("full approval still goes through the bounded backend and reports rejected writes", async () => {
+  const ai = useAiStore();
+  ai.approvalMode = "full";
+  mock.call.mockRejectedValueOnce(new Error("outside workspace"));
+  ai.receivePatch({
+    path: "/outside/private.md",
+    original: "a",
+    proposed: "b",
+  });
+  await Promise.resolve();
+  await Promise.resolve();
+  await Promise.resolve();
+  expect(mock.call).toHaveBeenCalledWith("apply_file_patch", {
+    path: "/outside/private.md",
+    original: "a",
+    proposed: "b",
+  });
+  expect(ai.patches[0].status).toBe("pending");
+  expect(ai.error).toContain("outside workspace");
+  ai.approvalMode = "request";
+  expect(ai.applying).toEqual([]);
+});

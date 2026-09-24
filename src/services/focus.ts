@@ -1,3 +1,4 @@
+import { onMounted, onBeforeUnmount } from "vue";
 export function trapDialogTab(event: KeyboardEvent) {
   if (event.key !== "Tab") return;
   const root = event.currentTarget as HTMLElement;
@@ -22,4 +23,28 @@ export function trapDialogTab(event: KeyboardEvent) {
     event.preventDefault();
     first.focus();
   }
+}
+
+export function useDialogEscape(
+  root: () => HTMLElement | undefined,
+  close: () => unknown,
+) {
+  const key = (event: KeyboardEvent) => {
+    if (
+      event.key !== "Escape" ||
+      event.defaultPrevented ||
+      !root()?.isConnected
+    )
+      return;
+    const dialogs = Array.from(
+      document.querySelectorAll<HTMLElement>('[role="dialog"],dialog[open]'),
+    );
+    const top = dialogs.at(-1);
+    if (top && top !== root() && !root()?.contains(top)) return;
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    close();
+  };
+  onMounted(() => document.addEventListener("keydown", key));
+  onBeforeUnmount(() => document.removeEventListener("keydown", key));
 }

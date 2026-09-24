@@ -26,7 +26,12 @@ onBeforeUnmount(() => previous?.isConnected && previous.focus());
     >
       <header>
         <h2>自定义 CSS</h2>
-        <Button title="关闭" aria-label="关闭自定义 CSS" @click="emit('close')">
+        <Button
+          title="关闭"
+          aria-label="关闭自定义 CSS"
+          shortcut="Escape"
+          @click="emit('close')"
+        >
           ×
         </Button>
       </header>

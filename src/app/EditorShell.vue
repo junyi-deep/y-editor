@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import {
   computed,
+  provide,
   nextTick,
   onBeforeUnmount,
   onMounted,
@@ -18,7 +19,7 @@ import {
   defineAsyncComponent,
 } from "vue";
 import { useController } from "./controller";
-import { shortcutLabel } from "../command-palette/registry";
+import { shortcutLabel, commandRegistryKey } from "../command-palette/registry";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import ShortcutHelp from "../settings/ShortcutHelp.vue";
 import UiIcon from "../components/UiIcon.vue";
@@ -44,6 +45,7 @@ import AppDialog from "../components/AppDialog.vue";
 import { diffLines } from "diff";
 const controller = useController();
 const { doc, ui, settings, registry, adapter, external } = controller;
+provide(commandRegistryKey, registry);
 const aiStore = useAiStore();
 const workspace = useWorkspaceStore();
 /** The titlebar carries orientation, not just the file name: which folder the
@@ -313,7 +315,7 @@ onBeforeUnmount(() => useAiStore().dispose());
         aria-label="文档编辑区"
       >
         <div class="document-view-menu">
-          <DropdownMenu>
+          <DropdownMenu :modal="false">
             <DropdownMenuTrigger
               class="view-width-toggle"
               title="文档视图与导出"
@@ -414,18 +416,37 @@ onBeforeUnmount(() => useAiStore().dispose());
       :style="{ left: `${floating.x}px`, top: `${floating.y}px` }"
       @mousedown.prevent
     >
-      <Button title="加粗" @click="controller.execute('editor.bold')">
+      <Button
+        title="加粗"
+        command="editor.bold"
+        @click="controller.execute('editor.bold')"
+      >
         <UiIcon name="bold" /></Button
-      ><Button title="斜体" @click="controller.execute('editor.italic')">
+      ><Button
+        title="斜体"
+        command="editor.italic"
+        @click="controller.execute('editor.italic')"
+      >
         <UiIcon name="italic" /></Button
-      ><Button title="删除线" @click="controller.execute('editor.strike')">
+      ><Button
+        title="删除线"
+        command="editor.strike"
+        @click="controller.execute('editor.strike')"
+      >
         <UiIcon name="strike" /></Button
-      ><Button title="链接" @click="controller.execute('editor.link')">
+      ><Button
+        title="链接"
+        command="editor.link"
+        @click="controller.execute('editor.link')"
+      >
         <UiIcon name="link" /></Button
       ><Button
         title="AI 编辑选区"
         @click="
-          reference(selection, `选区 · ${selection.length} 字符`);
+          reference(
+            selection,
+            adapter?.getSelection(true).rangeLabel ?? '文档选区',
+          );
           floating = null;
         "
       >
@@ -436,6 +457,7 @@ onBeforeUnmount(() => useAiStore().dispose());
       <div class="status-tools">
         <Button
           title="切换侧边栏"
+          command="view.sidebar"
           aria-label="切换侧边栏"
           :class="{ active: ui.sidebar }"
           @click="controller.execute('view.sidebar')"
@@ -444,6 +466,7 @@ onBeforeUnmount(() => useAiStore().dispose());
         </Button>
         <Button
           title="切换源代码模式"
+          command="editor.source"
           aria-label="切换源代码模式"
           :class="{ active: ui.source }"
           @click="controller.execute('editor.source')"
@@ -452,6 +475,7 @@ onBeforeUnmount(() => useAiStore().dispose());
         </Button>
         <Button
           title="偏好设置"
+          command="settings.open"
           aria-label="打开偏好设置"
           @click="ui.settingsOpen = true"
         >
@@ -459,6 +483,7 @@ onBeforeUnmount(() => useAiStore().dispose());
         </Button>
         <Button
           title="最近打开的文件和文件夹"
+          command="file.recent"
           aria-label="最近打开"
           @click="controller.execute('file.recent')"
         >
@@ -496,6 +521,7 @@ onBeforeUnmount(() => useAiStore().dispose());
       <Button
         class="status-ai"
         title="AI 助手"
+        command="view.ai"
         aria-label="切换 AI 助手"
         :class="{ active: ui.assistant }"
         @click="

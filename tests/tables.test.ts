@@ -135,3 +135,32 @@ it("reorders columns and promotes dragged rows to a valid header", () => {
   expect(table.rows[0].cells[0].tagName).toBe("TH");
   expect(table.rows[1].cells[0].tagName).toBe("TD");
 });
+
+it("resolves context action hints when the menu opens", () => {
+  const host = document.createElement("div");
+  host.innerHTML = "<p>text</p>";
+  document.body.append(host);
+  const shortcut = vi.fn((action: string) =>
+    action === "undo" ? "Ctrl+Alt+Z" : action === "copy" ? "Ctrl+C" : "",
+  );
+  const interactions = createEditorInteractions(host, {
+    shortcut,
+    format: vi.fn(),
+    insert: vi.fn(),
+    changed: vi.fn(),
+  });
+  host.firstElementChild!.dispatchEvent(
+    new MouseEvent("contextmenu", { bubbles: true, cancelable: true }),
+  );
+  const items = Array.from(
+    document.querySelectorAll<HTMLButtonElement>(".editor-context button"),
+  );
+  expect(items.find((b) => b.textContent === "撤销")!.title).toBe(
+    "撤销 · Ctrl+Alt+Z",
+  );
+  expect(items.find((b) => b.textContent === "复制")!.title).toBe(
+    "复制 · Ctrl+C",
+  );
+  interactions.destroy();
+  host.remove();
+});

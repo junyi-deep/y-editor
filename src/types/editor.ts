@@ -1,6 +1,7 @@
 export type Appearance = "light" | "dark";
 export interface EditorSelection {
   text: string;
+  rangeLabel?: string;
 }
 export interface EditorAdapter {
   open(content: string): Promise<void>;
@@ -11,7 +12,7 @@ export interface EditorAdapter {
   save(): Promise<void>;
   insertText(text: string): void;
   replaceSelection(text: string): void;
-  getSelection(): EditorSelection;
+  getSelection(withLocation?: boolean): EditorSelection;
   focus(): void;
   setTheme(theme: Appearance): void;
   setFontSize(size: number): void;

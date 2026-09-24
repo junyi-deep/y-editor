@@ -1,7 +1,11 @@
 import type { EditorView } from "@milkdown/kit/prose/view";
 import type { Node as ProseNode } from "@milkdown/kit/prose/model";
 import { TextSelection } from "@milkdown/kit/prose/state";
-import { CellSelection, selectedRect, tableEditingKey } from "@milkdown/kit/prose/tables";
+import {
+  CellSelection,
+  selectedRect,
+  tableEditingKey,
+} from "@milkdown/kit/prose/tables";
 import type { TableAction } from "./tables";
 
 /** Spreadsheet-style selection; double-click enters text, edges retain reordering. */
@@ -25,7 +29,11 @@ export function createTableSelection(view: EditorView, host: HTMLElement) {
     if (a === undefined || b === undefined) return;
     const selection = CellSelection.create(view.state.doc, a, b);
     if (!view.state.selection.eq(selection))
-      view.dispatch(view.state.tr.setSelection(selection).setMeta(tableEditingKey, anchor ? a : -1));
+      view.dispatch(
+        view.state.tr
+          .setSelection(selection)
+          .setMeta(tableEditingKey, anchor ? a : -1),
+      );
   }
   function cellAt(event: MouseEvent) {
     const cell = (event.target as Element)?.closest?.<HTMLTableCellElement>(
@@ -40,8 +48,10 @@ export function createTableSelection(view: EditorView, host: HTMLElement) {
     if (
       (event.button !== 0 || event.ctrlKey) &&
       view.state.selection instanceof CellSelection
-    )
+    ) {
       event.preventDefault();
+      event.stopPropagation();
+    }
     const cell = cellAt(event);
     if (
       !cell ||
@@ -212,6 +222,7 @@ export function changeTable(
         );
       }),
     );
+  if (action === "deleteTable") rows.splice(0);
   if (action === "deleteRow")
     rowIndices.sort((a, b) => b - a).forEach((i) => rows.splice(i, 1));
   if (action === "deleteColumn")

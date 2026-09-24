@@ -1,3 +1,4 @@
+import { selectionRange, lineRange } from "./source-location";
 import {
   Editor,
   rootCtx,
@@ -119,6 +120,7 @@ const hostKeymaps = new Set<unknown>(
 );
 
 export interface EditorHooks {
+  shortcut?: (action: string) => string;
   save?: () => Promise<void>;
   reference?: (text: string, label: string) => void;
   immersive?: (active: boolean) => void;
@@ -146,6 +148,7 @@ export function createEditorAdapter(
     suppress = false,
     code: EditorView | undefined;
   let activeCode: EditorView | undefined;
+  const codePositions = new WeakMap<EditorView, () => number | undefined>();
   let interactions: ReturnType<typeof createEditorInteractions> | undefined;
   let disposeTableSelection: (() => void) | undefined;
   const readonly = new Compartment();
@@ -318,6 +321,7 @@ export function createEditorAdapter(
         ],
       }),
     });
+    codePositions.set(cm, getPos);
     let languageGeneration = 0;
     function setLanguage() {
       const generation = ++languageGeneration;
@@ -492,8 +496,14 @@ export function createEditorAdapter(
       new Plugin({
         props: {
           decorations(state) {
-            const {$from} = state.selection;
-            return $from.depth ? DecorationSet.create(state.doc, [Decoration.node($from.before(1), $from.after(1), {class:'y-current-block'})]) : DecorationSet.empty;
+            const { $from } = state.selection;
+            return $from.depth
+              ? DecorationSet.create(state.doc, [
+                  Decoration.node($from.before(1), $from.after(1), {
+                    class: "y-current-block",
+                  }),
+                ])
+              : DecorationSet.empty;
           },
           nodeViews: {
             html: (node) => {
@@ -612,7 +622,9 @@ export function createEditorAdapter(
         : undefined,
     );
     if (element.classList.contains("y-typewriter"))
-      preview.querySelector('.y-current-block')?.scrollIntoView?.({ block: "center" });
+      preview
+        .querySelector(".y-current-block")
+        ?.scrollIntoView?.({ block: "center" });
   }
   const readObserver = new MutationObserver(() => {
     if (!ready || disposed) return;
@@ -678,8 +690,25 @@ export function createEditorAdapter(
       ready = true;
       baseline = editor.action(getMarkdown());
       disposeTableSelection = createTableSelection(view(), preview);
+      let savedSelection = view().state.selection.getBookmark();
       interactions = createEditorInteractions(element, {
-        restore: adapter.focus,
+        shortcut: hooks.shortcut,
+        remember: () => {
+          savedSelection = view().state.selection.getBookmark();
+        },
+        restore: () => {
+          const prose = view();
+          try {
+            prose.dispatch(
+              prose.state.tr.setSelection(
+                savedSelection.resolve(prose.state.doc),
+              ),
+            );
+          } catch {
+            /* The document may have changed while the menu was open. */
+          }
+          adapter.focus();
+        },
         selectAll: () => {
           const cm = sourceMode ? code : activeCode;
           if (cm) {
@@ -809,15 +838,45 @@ export function createEditorAdapter(
     replaceSelection(text) {
       adapter.insertText(text);
     },
-    getSelection() {
+    getSelection(withLocation = false) {
       const cm = sourceMode ? code : activeCode;
       if (cm) {
         const s = cm.state.selection.main;
-        return { text: cm.state.sliceDoc(s.from, s.to) };
+        const text = cm.state.sliceDoc(s.from, s.to);
+        let rangeLabel: string | undefined;
+        if (withLocation && sourceMode)
+          rangeLabel = lineRange(cm.state.doc.toString(), s.from, s.to);
+        else if (withLocation) {
+          const pos = codePositions.get(cm)?.();
+          if (pos !== undefined)
+            rangeLabel = editor!.action((ctx) =>
+              selectionRange(
+                view().state,
+                pos + 1 + s.from,
+                pos + 1 + s.to,
+                ctx.get(serializerCtx),
+                value(),
+              ),
+            );
+        }
+        return { text, rangeLabel };
       }
       const prose = view(),
         s = prose.state.selection;
-      return { text: prose.state.doc.textBetween(s.from, s.to, "\n") };
+      return {
+        text: prose.state.doc.textBetween(s.from, s.to, "\n"),
+        rangeLabel: withLocation
+          ? editor!.action((ctx) =>
+              selectionRange(
+                prose.state,
+                s.from,
+                s.to,
+                ctx.get(serializerCtx),
+                value(),
+              ),
+            )
+          : undefined,
+      };
     },
     focus() {
       if (sourceMode) code?.focus();
