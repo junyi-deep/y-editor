@@ -6,6 +6,8 @@ import EditorShell from "../src/app/EditorShell.vue";
 import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { settle } from "./settle";
+const isOwnedUi = (path: string) =>
+  path.replaceAll("\\", "/").includes("components/ui/");
 vi.mock("../src/editor/MarkdownEditor.vue", () => ({
   default: { template: '<textarea aria-label="测试正文" />' },
 }));
@@ -33,6 +35,7 @@ it("opens the document actions menu, then dismisses it on Escape", async () => {
   expect(document.querySelector('[role="menu"]')).toBeNull();
 });
 it("keeps native select/datalist and direct engine imports out of business surfaces", () => {
+  expect(isOwnedUi("src\\components\\ui\\button\\Button.vue")).toBe(true);
   const scan = (dir: string): string[] =>
     readdirSync(dir, { withFileTypes: true }).flatMap((entry) =>
       entry.isDirectory()
@@ -45,7 +48,7 @@ it("keeps native select/datalist and direct engine imports out of business surfa
     // Owned Checkbox, not a native input: ADR-0007 keeps form controls in one
     // place so padding, focus and dark-mode behaviour cannot drift per surface.
     expect(source, file).not.toMatch(/type=["']checkbox["']/);
-    if (!file.includes("components/ui/"))
+    if (!isOwnedUi(file))
       expect(source, file).not.toMatch(/from ["']reka-ui["']/);
   }
 });

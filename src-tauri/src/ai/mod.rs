@@ -251,6 +251,11 @@ pub async fn ai_stop(state: crate::windows::WindowState) -> AppResult<()> {
     state.ai.lock().await.stop().await;
     Ok(())
 }
+fn normalize_patch_text(text: &str) -> String {
+    text.strip_prefix('\u{feff}')
+        .unwrap_or(text)
+        .replace("\r\n", "\n")
+}
 #[tauri::command]
 pub async fn apply_file_patch(
     app: crate::windows::WindowApp,
@@ -268,11 +273,11 @@ pub async fn apply_file_patch(
             .lock()
             .map_err(|_| error("工作目录锁错误"))?;
         let mut doc = ws.read(Path::new(&path))?;
-        if doc.content != original {
+        if doc.content != normalize_patch_text(&original) {
             return Err(error("CONFLICT: 文档已变化，无法应用 AI 修改"));
         }
         let expected = doc.disk_hash.clone();
-        doc.content = proposed;
+        doc.content = normalize_patch_text(&proposed);
         ws.save(&doc, &expected)
     })
     .await
@@ -395,4 +400,15 @@ pub async fn ai_models(
 #[tauri::command]
 pub async fn ai_compact(state: crate::windows::WindowState) -> AppResult<()> {
     state.ai.lock().await.send(json!({"type":"compact"})).await
+}
+
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn patch_text_matches_workspace_read_representation() {
+        assert_eq!(
+            super::normalize_patch_text("\u{feff}one\r\ntwo\r\n"),
+            "one\ntwo\n"
+        );
+    }
 }

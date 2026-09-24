@@ -5,7 +5,7 @@ import {
   shortcutLabel,
 } from "../src/command-palette/registry";
 import { findMatches, replaceMatches } from "../src/editor/markdown/find";
-import { mergePatch } from "../src/ai/merge";
+import { applyDocumentPatch, mergePatch } from "../src/ai/merge";
 describe("commands and editing", () => {
   it("renders stored combos as platform glyphs without touching the binding", () => {
     expect(shortcutLabel("Mod+q", "MacIntel")).toBe("⌘Q");
@@ -67,6 +67,27 @@ describe("commands and editing", () => {
     expect(
       mergePatch(base, "ONE\ntwo\nthree\nfour\n", "other\ntwo\nthree\nfour\n"),
     ).toBeNull();
+  });
+  it("accepts a unique exact excerpt and normalizes disk line endings", () => {
+    expect(
+      applyDocumentPatch("middle\n", "top\nmiddle\nbottom\n", "changed\n"),
+    ).toBe("top\nchanged\nbottom\n");
+    expect(
+      applyDocumentPatch(
+        "\uFEFFone\r\ntwo\r\n",
+        "one\ntwo\n",
+        "ONE\r\ntwo\r\n",
+      ),
+    ).toBe("ONE\ntwo\n");
+    expect(applyDocumentPatch("one\ntwo", "one\ntwo\n", "ONE\ntwo")).toBe(
+      "ONE\ntwo\n",
+    );
+  });
+  it("does not overwrite an edited or repeated excerpt", () => {
+    expect(
+      applyDocumentPatch("middle\n", "top\nchanged\nbottom\n", "new\n"),
+    ).toBeNull();
+    expect(applyDocumentPatch("same\n", "same\nsame\n", "new\n")).toBeNull();
   });
 });
 import { selectPatch } from "../src/ai/partial";

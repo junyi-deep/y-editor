@@ -49,3 +49,30 @@ export function mergePatch(
   }
   return result.join("");
 }
+
+/** Match the editor's UTF-8/BOM and LF representation at the approval boundary. */
+export function normalizePatchText(text: string) {
+  return text.replace(/^\uFEFF/, "").replace(/\r\n/g, "\n");
+}
+
+export function applyDocumentPatch(
+  original: string,
+  current: string,
+  proposed: string,
+): string | null {
+  const base = normalizePatchText(original);
+  const replacement = normalizePatchText(proposed);
+  const merged = mergePatch(base, current, replacement);
+  if (merged !== null) return merged;
+
+  // The model may propose a local excerpt instead of the whole document.
+  // Only an exact, unique occurrence is safe to replace; an edited or
+  // ambiguous excerpt still requires a fresh proposal.
+  if (
+    !base ||
+    !current.includes(base) ||
+    current.indexOf(base) !== current.lastIndexOf(base)
+  )
+    return null;
+  return current.replace(base, replacement);
+}

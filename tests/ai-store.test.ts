@@ -127,6 +127,17 @@ it("requests approval by default and applies a proposal only once", async () => 
   await ai.applyPatch(ai.patches[0]);
   expect(doc.version).toBe(version);
 });
+it("accepts an unchanged document excerpt and preserves surrounding text", async () => {
+  const { useDocumentStore } = await import("../src/stores/document");
+  const doc = useDocumentStore();
+  doc.path = "/current/note.md";
+  doc.content = "top\nmiddle\nbottom\n";
+  const ai = useAiStore();
+  ai.receivePatch({ path: doc.path, original: "middle\n", proposed: "new\n" });
+  await ai.applyPatch(ai.patches[0]);
+  expect(doc.content).toBe("top\nnew\nbottom\n");
+  expect(ai.patches[0].status).toBe("accepted");
+});
 it("assist approves only the current document and retains conflicting proposals", async () => {
   const { useDocumentStore } = await import("../src/stores/document");
   const doc = useDocumentStore();

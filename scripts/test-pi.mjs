@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { createServer } from "node:http";
-import { mkdtemp, writeFile, rm } from "node:fs/promises";
+import { mkdtemp, writeFile, rm, realpath } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { spawn } from "node:child_process";
@@ -14,7 +14,7 @@ const binary =
       ? "pi-x86_64-pc-windows-msvc.exe"
       : "pi-aarch64-apple-darwin",
   );
-for (const [protocol, bridge, failure, multimodal] of [
+for (const [protocol, bridge, failure, multimodal, proposal] of [
   ["openai-completions", false],
   ["openai-completions", false, undefined, true],
   ["anthropic-messages", false],
@@ -23,9 +23,10 @@ for (const [protocol, bridge, failure, multimodal] of [
   ["anthropic-messages", false, "401"],
   ["openai-completions", false, "cancel"],
   ["anthropic-messages", false, "cancel"],
+  ["openai-completions", false, undefined, false, true],
 ]) {
   test(
-    `Pi RPC ${protocol}: ${failure || (multimodal ? "image and reasoning stream" : bridge ? "host tool round-trip" : "text stream")} and extension discovery`,
+    `Pi RPC ${protocol}: ${failure || (proposal ? "read and propose edit" : multimodal ? "image and reasoning stream" : bridge ? "host tool round-trip" : "text stream")} and extension discovery`,
     { timeout: 30000 },
     async () => {
       const directory = await mkdtemp(join(tmpdir(), "y-pi-test-"));
@@ -81,7 +82,23 @@ for (const [protocol, bridge, failure, multimodal] of [
           return;
         }
         response.writeHead(200, { "Content-Type": "text/event-stream" });
-        if (bridge && requestCount === 1) {
+        if (proposal && requestCount <= 2) {
+          if (requestCount === 2)
+            assert.ok(JSON.stringify(data.messages).includes("one\\ntwo\\n"));
+          const name = requestCount === 1 ? "workspace_read" : "propose_patch";
+          const args =
+            requestCount === 1
+              ? { path: "note.md" }
+              : {
+                  path: "note.md",
+                  original: "one\ntwo\n",
+                  proposed: "ONE\ntwo\n",
+                  reason: "test",
+                };
+          response.end(
+            `data: ${JSON.stringify({ id: "test", object: "chat.completion.chunk", choices: [{ index: 0, delta: { role: "assistant", tool_calls: [{ index: 0, id: `tool-${requestCount}`, type: "function", function: { name, arguments: JSON.stringify(args) } }] }, finish_reason: null }] })}\n\ndata: ${JSON.stringify({ id: "test", object: "chat.completion.chunk", choices: [{ index: 0, delta: {}, finish_reason: "tool_calls" }] })}\n\ndata: [DONE]\n\n`,
+          );
+        } else if (bridge && requestCount === 1) {
           response.end(
             `data: ${JSON.stringify({ id: "test", object: "chat.completion.chunk", choices: [{ index: 0, delta: { role: "assistant", tool_calls: [{ index: 0, id: "tool-1", type: "function", function: { name: "knowledge_search", arguments: '{"query":"contract"}' } }] }, finish_reason: null }] })}\n\ndata: ${JSON.stringify({ id: "test", object: "chat.completion.chunk", choices: [{ index: 0, delta: {}, finish_reason: "tool_calls" }] })}\n\ndata: [DONE]\n\n`,
           );
@@ -179,6 +196,8 @@ for (const [protocol, bridge, failure, multimodal] of [
           },
         }),
       );
+      if (proposal)
+        await writeFile(join(directory, "note.md"), "\uFEFFone\r\ntwo\r\n");
       child = spawn(
         binary,
         [
@@ -333,6 +352,16 @@ for (const [protocol, bridge, failure, multimodal] of [
             events.some((e) => e.type === "tool_execution_end" && !e.isError),
             output,
           );
+        }
+        if (proposal) {
+          assert.equal(requestCount, 3);
+          const patch = events.find(
+            (event) =>
+              event.type === "tool_execution_end" &&
+              event.result?.details?.yEditorPatch,
+          )?.result.details.yEditorPatch;
+          assert.equal(patch?.path, await realpath(join(directory, "note.md")));
+          assert.equal(patch?.original, "one\ntwo\n");
         }
         assert.ok(requested, `Provider was not called: ${stderr}\n${output}`);
         if (failure) {

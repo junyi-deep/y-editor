@@ -1,4 +1,4 @@
-import { mergePatch } from "../ai/merge";
+import { applyDocumentPatch } from "../ai/merge";
 import { autoApprove, type ApprovalMode } from "../ai/approval";
 import { useDocumentStore } from "./document";
 import { defineStore } from "pinia";
@@ -69,7 +69,11 @@ export const useAiStore = defineStore("ai", () => {
     try {
       const doc = useDocumentStore();
       if (patch.path === (doc.path ?? "")) {
-        const merged = mergePatch(patch.original, doc.content, proposed);
+        const merged = applyDocumentPatch(
+          patch.original,
+          doc.content,
+          proposed,
+        );
         if (merged === null)
           throw new Error("文档已变化，修改范围发生冲突，请重新生成提案。");
         doc.update(merged);

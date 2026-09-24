@@ -1,6 +1,6 @@
 [package]
 name = "y-editor"
-version = "0.0.4"
+version = "0.0.5"
 description = "A local-first Markdown editor"
 authors = ["y-editor contributors"]
 edition = "2021"
@@ -42,4 +42,3 @@ lto = true
 opt-level = 3
 panic = "abort"
 strip = true
-

@@ -120,7 +120,12 @@ export default function (pi) {
       const full = await allowed(path);
       if ((await stat(full)).size > 2_000_000)
         throw new Error("File too large");
-      return result(await readFile(full, "utf8"));
+      const content = await readFile(full, "utf8");
+      return result(
+        /\.(md|markdown|mdown|txt)$/i.test(full)
+          ? content.replace(/^\uFEFF/, "").replace(/\r\n/g, "\n")
+          : content,
+      );
     },
   });
   pi.registerTool({
@@ -178,14 +183,15 @@ export default function (pi) {
       reason: Type.String(),
     }),
     async execute(_id, patch) {
+      let path = patch.path;
       if (patch.path) {
-        await allowed(patch.path, true);
+        path = await allowed(patch.path, true);
         if (!/\.(md|markdown|mdown|txt)$/i.test(patch.path))
           throw new Error("Only Markdown/text changes may be proposed");
       }
       return result(
         "Proposed edit queued for user review. No file was changed.",
-        { yEditorPatch: patch },
+        { yEditorPatch: { ...patch, path } },
       );
     },
   });
